@@ -1,25 +1,63 @@
 from fastapi import HTTPException
 from datetime import date
-from app.repositories import mock_db, recipe_repo
+from sqlalchemy.orm import Session
+#from app.repositories.recipe_repo import RecipeRepository
+#from app.repositories.inventory import InventoryRepository
+from app.repositories.recipe_repo import get_ingredients
 
 
-def validate_order(order):
-    recipe = recipe_repo.get_recipe(order.recipe_id)
+def validate_order(order_data, db: Session):
+    # Получаем данные из словаря
+    recipe_id = order_data.get("recipe_id")
+    quantity = order_data.get("quantity")
+    delivery_date = order_data.get("delivery_date")
 
-    # проверка срока хранения
+    """
+    # 1. Проверяем существование рецепта
+    recipe_repo = RecipeRepository()
+    recipe = recipe_repo.get_by_id(db, recipe_id)
+
+    if not recipe:
+        raise HTTPException(status_code=404, detail=f"Рецепт с id {recipe_id} не найден")
+    """
+    # 2. Проверка даты доставки
     min_date = date.today()
-    if order.delivery_date < min_date:
-        raise HTTPException(400, "Дата меньше текущей")
+    if delivery_date < min_date:
+        raise HTTPException(status_code=400, detail="Дата доставки не может быть меньше текущей")
 
-    # проверка ингредиентов
-    ingredients = recipe_repo.get_ingredients(order.recipe_id)
+    # 3. Проверка ингредиентов
+    recipe_ingredients_repo = get_ingredients()
+    ingredients = recipe_ingredients_repo.get_by_recipe_id(db, recipe_id)
+
+    if not ingredients:
+        raise HTTPException(status_code=400, detail=f"Для рецепта {recipe.name} не указаны ингредиенты")
+
+    inventory_repo = InventoryRepository()
 
     for ing in ingredients:
-        stock = next(i for i in mock_db.MockDB.ingredients if i["ingredient_id"] == ing["ingredient_id"])
-        required = ing["quantity_per_unit"] * order.quantity
+        # Получаем остаток ингредиента на складе
+        inventory = inventory_repo.get_by_ingredient_id(db, ing.ingredient_id)
 
-        if stock["current_quantity"] < required:
+        if not inventory:
             raise HTTPException(
-                400,
-                f"Недостаточно ингредиента {stock['name']}"
+                status_code=400,
+                detail=f"Ингредиент с id {ing.ingredient_id} не найден на складе"
             )
+
+        # Рассчитываем требуемое количество
+        required = ing.quantity_per_unit * quantity
+
+        if inventory.current_quantity < required:
+            # Получаем название ингредиента
+            from app.models.ingredient import Ingredient
+            ingredient = db.query(Ingredient).filter(Ingredient.ingredient_id == ing.ingredient_id).first()
+            ingredient_name = ingredient.name if ingredient else f"id={ing.ingredient_id}"
+
+            raise HTTPException(
+                status_code=400,
+                detail=f"Недостаточно ингредиента '{ingredient_name}'. "
+                       f"Нужно: {required} {inventory.unit}, "
+                       f"в наличии: {inventory.current_quantity} {inventory.unit}"
+            )
+
+    return True

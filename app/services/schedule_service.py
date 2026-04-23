@@ -1,64 +1,85 @@
-from datetime import datetime, timedelta
-
-from app.repositories import schedule_repo
-from app.repositories.mock_db import MockDB
-
-
-def get_all_schedule():
-    return schedule_repo.get_all()
+from datetime import datetime
+from fastapi import HTTPException
+from app.services.base_service import BaseService
+from app.repositories import ScheduleEntryRepository
 
 
-def get_schedule(schedule_id: int):
-    return schedule_repo.get_by_id(schedule_id)
+class ScheduleService(BaseService):
 
+    def __init__(self):
+        super().__init__(ScheduleEntryRepository())
 
-def create_schedule(schedule_data):
-    # если приходит Pydantic → превращаем в dict
-    if hasattr(schedule_data, "dict"):
-        schedule_data = schedule_data.dict()
+    def validate(self, data: dict, is_update: bool = False):
+        """Валидация записи расписания"""
+        if not is_update or 'order_id' in data:
+            order_id = data.get('order_id', 0)
+            if order_id <= 0:
+                raise HTTPException(400, "ID заказа должен быть больше 0")
 
-    return schedule_repo.create(schedule_data)
+        if not is_update or 'recipe_operation_id' in data:
+            recipe_operation_id = data.get('recipe_operation_id', 0)
+            if recipe_operation_id <= 0:
+                raise HTTPException(400, "ID операции рецепта должен быть больше 0")
 
+        if not is_update or 'start_time' in data:
+            start_time = data.get('start_time')
+            if start_time:
+                if isinstance(start_time, str):
+                    start_time = datetime.fromisoformat(start_time)
+                if start_time < datetime.now():
+                    raise HTTPException(400, "Время начала не может быть в прошлом")
 
-def update_schedule(schedule_id: int, data: dict):
-    return schedule_repo.update(schedule_id, data)
+        if not is_update or 'end_time' in data:
+            end_time = data.get('end_time')
+            start_time = data.get('start_time')
+            if end_time and start_time:
+                if isinstance(end_time, str):
+                    end_time = datetime.fromisoformat(end_time)
+                if isinstance(start_time, str):
+                    start_time = datetime.fromisoformat(start_time)
+                if end_time <= start_time:
+                    raise HTTPException(400, "Время окончания должно быть больше времени начала")
 
+        if not is_update or 'equipment_id' in data:
+            equipment_id = data.get('equipment_id', 0)
+            if equipment_id <= 0:
+                raise HTTPException(400, "ID оборудования должен быть больше 0")
 
-def delete_schedule(schedule_id: int):
-    return schedule_repo.delete(schedule_id)
+        if not is_update or 'confectioner_id' in data:
+            confectioner_id = data.get('confectioner_id', 0)
+            if confectioner_id <= 0:
+                raise HTTPException(400, "ID кондитера должен быть больше 0")
 
+        if not is_update or 'status' in data:
+            status = data.get('status')
+            if status and status not in ['scheduled', 'in_progress', 'completed', 'cancelled']:
+                raise HTTPException(400, "Статус должен быть: scheduled, in_progress, completed, cancelled")
 
+        return data
 
-def generate_schedule(order):
+    def create(self, db, data):
+        if hasattr(data, 'dict'):
+            data_dict = data.dict()
+        else:
+            data_dict = data
 
-    operations = [
-        op for op in MockDB.recipe_operations
-        if op["recipe_id"] == order["recipe_id"]
-    ]
+        self.validate(data_dict)
+        return self.repo.safe_create(db, data_dict)
 
-    operations.sort(key=lambda x: x["sequence_number"])
+    def update(self, db, entity_id, data):
+        if hasattr(data, 'dict'):
+            data_dict = data.dict(exclude_unset=True)
+        else:
+            data_dict = data
 
-    # последнее время в расписании
-    if MockDB.schedule:
-        last_end_time = max(s["end_time"] for s in MockDB.schedule)
-        current_time = last_end_time
-    else:
-        current_time = datetime.now()
+        self.validate(data_dict, is_update=True)
+        return self.repo.update(db, entity_id, data_dict)
 
-    for op in operations:
-        start_time = current_time
-        end_time = start_time + timedelta(minutes=op["duration_minutes"])
+    def get_by_order_id(self, db, order_id: int):
+        return self.repo.get_by_order_id(db, order_id)
 
-        schedule_entry = {
-            "order_id": order["order_id"],
-            "recipe_operation_id": op["recipe_operation_id"],
-            "start_time": start_time,
-            "end_time": end_time,
-            "equipment_id": None,
-            "confectioner_id": 1,
-            "status": "planned"
-        }
+    def get_by_equipment(self, db, equipment_id: int):
+        return self.repo.get_by_equipment(db, equipment_id)
 
-        schedule_repo.create(schedule_entry)
-
-        current_time = end_time
+    def get_by_confectioner(self, db, confectioner_id: int):
+        return self.repo.get_by_confectioner(db, confectioner_id)
