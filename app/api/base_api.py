@@ -26,7 +26,7 @@ class BaseAPI:
 
         # CREATE
         @self.router.post("/")
-        def create(data: dict, db: Session = Depends(get_db)):
+        def create(data, db: Session = Depends(get_db)):
             return self.service.create(db, data)
 
         # UPDATE

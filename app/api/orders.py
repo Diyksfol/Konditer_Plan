@@ -11,7 +11,7 @@ router = order_api.router
 {
   "recipe_id": 1,
   "quantity": 10,
-  "delivery_date": "2024-12-25",
+  "delivery_date": "2026-04-25",
   "status": "planned"
 }
 '''
