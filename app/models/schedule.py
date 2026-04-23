@@ -1,13 +1,15 @@
-from pydantic import BaseModel
-from datetime import datetime
-from typing import Optional
+from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey
+from app.repositories.database import Base
 
-class ScheduleEntry(BaseModel):
-    schedule_entry_id: int
-    order_id: int
-    recipe_operation_id: int
-    start_time: datetime
-    end_time: datetime
-    equipment_id: Optional[int]
-    confectioner_id: int
-    status: str
+
+class ScheduleEntry(Base):
+    __tablename__ = "schedule_entries"
+
+    schedule_entry_id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(Integer, ForeignKey("orders.order_id"))
+    recipe_operation_id = Column(Integer, ForeignKey("recipe_operations.recipe_operation_id"))
+    start_time = Column(TIMESTAMP)
+    end_time = Column(TIMESTAMP)
+    equipment_id = Column(Integer, ForeignKey("equipment.equipment_id"))
+    confectioner_id = Column(Integer, ForeignKey("confectioners.confectioner_id"))
+    status = Column(String(20))
