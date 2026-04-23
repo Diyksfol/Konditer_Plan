@@ -1,14 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import Type
 from app.dependencies import get_db
 
 
 class BaseAPI:
-    def __init__(self, service, create_schema: Type = None):
+    def __init__(self, service):
         self.router = APIRouter()
         self.service = service
-        self.create_schema = create_schema
 
         self._register_routes()
 
@@ -29,7 +27,7 @@ class BaseAPI:
 
         # CREATE
         @self.router.post("/")
-        def create(data: self.create_schema, db: Session = Depends(get_db)):
+        def create(data, db: Session = Depends(get_db)):
             return self.service.create(db, data)
 
         # UPDATE
