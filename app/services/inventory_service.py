@@ -10,26 +10,38 @@ class InventoryService(BaseService):
         super().__init__(InventoryRepository())
 
     def validate(self, data: dict, is_update: bool = False):
-        """Валидация инвентаря"""
-        if not is_update or 'ingredient_id' in data:
-            ingredient_id = data.get('ingredient_id', 0)
-            if ingredient_id <= 0:
-                raise HTTPException(400, "ID ингредиента должен быть больше 0")
+        """Валидация ингредиента"""
+        if not is_update or 'name' in data:
+            name = data.get('name', '')
+            if not name or not name.strip():
+                raise HTTPException(400, "Название ингредиента обязательно")
 
         if not is_update or 'unit' in data:
             unit = data.get('unit', '')
             if not unit or not unit.strip():
                 raise HTTPException(400, "Единица измерения обязательна")
 
+        # ИСПРАВЛЕНО: преобразование в float если пришла строка
         if not is_update or 'current_quantity' in data:
             current_quantity = data.get('current_quantity', 0)
+            if isinstance(current_quantity, str):
+                try:
+                    current_quantity = float(current_quantity)
+                except ValueError:
+                    raise HTTPException(400, "Текущее количество должно быть числом")
             if current_quantity < 0:
                 raise HTTPException(400, "Текущее количество не может быть отрицательным")
 
-        if not is_update or 'min_stock' in data:
-            min_stock = data.get('min_stock', 0)
-            if min_stock < 0:
-                raise HTTPException(400, "Минимальный запас не может быть отрицательным")
+        # ИСПРАВЛЕНО: преобразование в float если пришла строка
+        if not is_update or 'min_quantity' in data:
+            min_quantity = data.get('min_quantity', 0)
+            if isinstance(min_quantity, str):
+                try:
+                    min_quantity = float(min_quantity)
+                except ValueError:
+                    raise HTTPException(400, "Минимальное количество должно быть числом")
+            if min_quantity < 0:
+                raise HTTPException(400, "Минимальное количество не может быть отрицательным")
 
         return data
 

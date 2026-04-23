@@ -1,7 +1,7 @@
 from datetime import datetime
 from fastapi import HTTPException
 from app.services.base_service import BaseService
-from app.repositories import ScheduleEntryRepository
+from app.repositories.schedule_repo import ScheduleEntryRepository
 
 
 class ScheduleService(BaseService):
@@ -21,23 +21,34 @@ class ScheduleService(BaseService):
             if recipe_operation_id <= 0:
                 raise HTTPException(400, "ID операции рецепта должен быть больше 0")
 
+        # преобразование строки в datetime
         if not is_update or 'start_time' in data:
             start_time = data.get('start_time')
             if start_time:
                 if isinstance(start_time, str):
-                    start_time = datetime.fromisoformat(start_time)
+                    try:
+                        start_time = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                    except ValueError:
+                        raise HTTPException(400, "Неверный формат даты. Используйте ГГГГ-ММ-ДДTHH:MM:SS")
                 if start_time < datetime.now():
                     raise HTTPException(400, "Время начала не может быть в прошлом")
 
+        # ИСПРАВЛЕНО: преобразование строки в datetime и сравнение
         if not is_update or 'end_time' in data:
             end_time = data.get('end_time')
             start_time = data.get('start_time')
-            if end_time and start_time:
+            if end_time:
                 if isinstance(end_time, str):
-                    end_time = datetime.fromisoformat(end_time)
-                if isinstance(start_time, str):
-                    start_time = datetime.fromisoformat(start_time)
-                if end_time <= start_time:
+                    try:
+                        end_time = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
+                    except ValueError:
+                        raise HTTPException(400, "Неверный формат даты. Используйте ГГГГ-ММ-ДДTHH:MM:SS")
+
+                # Преобразуем start_time если он есть и это строка
+                if start_time and isinstance(start_time, str):
+                    start_time = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+
+                if start_time and end_time <= start_time:
                     raise HTTPException(400, "Время окончания должно быть больше времени начала")
 
         if not is_update or 'equipment_id' in data:

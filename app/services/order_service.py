@@ -1,9 +1,8 @@
 from datetime import datetime
 from fastapi import HTTPException
 from app.services.base_service import BaseService
-from app.repositories import OrderRepository
-from app.services.validation_service import validate_order
-from app.services.schedule_service import generate_schedule
+from app.repositories.order_repo import OrderRepository
+# from app.services.schedule_service import generate_schedule
 
 
 class OrderService(BaseService):
@@ -24,8 +23,17 @@ class OrderService(BaseService):
 
         if not is_update or 'delivery_date' in data:
             delivery_date = data.get('delivery_date')
-            if delivery_date and delivery_date < datetime.now().date():
-                raise HTTPException(400, "Дата доставки не может быть меньше текущей")
+            if delivery_date:
+                # Преобразуем строку в объект date, если это строка
+                if isinstance(delivery_date, str):
+                    try:
+                        delivery_date = datetime.strptime(delivery_date, '%Y-%m-%d').date()
+                    except ValueError:
+                        raise HTTPException(400, "Неверный формат даты. Используйте ГГГГ-ММ-ДД")
+
+                # Сравниваем с текущей датой
+                if delivery_date < datetime.now().date():
+                    raise HTTPException(400, "Дата доставки не может быть меньше текущей")
 
         if not is_update or 'status' in data:
             status = data.get('status')
@@ -57,7 +65,7 @@ class OrderService(BaseService):
         order = self.repo.safe_create(db, new_order)
 
         # Генерация расписания
-        generate_schedule(order)
+        # generate_schedule(order)
 
         return order
 
