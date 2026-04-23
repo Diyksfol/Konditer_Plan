@@ -1,13 +1,29 @@
-from app.repositories.mock_db import MockDB
+from sqlalchemy.orm import Session
+from app.repositories.base_repository import BaseRepository
+from app.models import Recipe
 
-def get_recipe(recipe_id):
-    return next(r for r in MockDB.recipes if r["recipe_id"] == recipe_id)
 
-def get_ingredients(recipe_id):
-    return [ri for ri in MockDB.recipe_ingredients if ri["recipe_id"] == recipe_id]
+class RecipeRepository(BaseRepository):
 
-def get_operations(recipe_id):
-    return sorted(
-        [op for op in MockDB.recipe_operations if op["recipe_id"] == recipe_id],
-        key=lambda x: x["sequence_number"]
-    )
+    def __init__(self):
+        super().__init__(Recipe)
+
+    # чтение по имени
+    def get_by_name(self, db: Session, name: str):
+        return db.query(Recipe).filter(Recipe.name == name).first()
+
+    # поиск по сроку хранения
+    def get_by_shelf_life(self, db: Session, max_days: int):
+        return db.query(Recipe).filter(Recipe.shelf_life_days <= max_days).all()
+
+    # проверка существования
+    def exists(self, db: Session, recipe_id: int):
+        return db.query(Recipe).filter(Recipe.recipe_id == recipe_id).first() is not None
+
+    # безопасное создание
+    def safe_create(self, db: Session, data: dict):
+        recipe = Recipe(**data)
+        db.add(recipe)
+        db.commit()
+        db.refresh(recipe)
+        return recipe

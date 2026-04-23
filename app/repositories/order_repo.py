@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.repositories.base_repository import BaseRepository
-from app.models.order import Order
+from app.models import Order
 
 
 class OrderRepository(BaseRepository):

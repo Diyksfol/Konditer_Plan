@@ -1,33 +1,41 @@
-from app.repositories.mock_db import MockDB
+from sqlalchemy.orm import Session
+from datetime import datetime
+from app.repositories.base_repository import BaseRepository
+from app.models import ScheduleEntry
 
 
-def get_all():
-    return MockDB.schedule
+class ScheduleEntryRepository(BaseRepository):
 
+    def __init__(self):
+        super().__init__(ScheduleEntry)
 
-def get_by_id(schedule_id: int):
-    return next((s for s in MockDB.schedule if s["schedule_entry_id"] == schedule_id), None)
+    # чтение по заказу
+    def get_by_order_id(self, db: Session, order_id: int):
+        return db.query(ScheduleEntry).filter(ScheduleEntry.order_id == order_id).all()
 
+    # чтение по оборудованию
+    def get_by_equipment(self, db: Session, equipment_id: int):
+        return db.query(ScheduleEntry).filter(ScheduleEntry.equipment_id == equipment_id).all()
 
-def create(schedule: dict):
-    new_schedule = {
-        "schedule_entry_id": len(MockDB.schedule) + 1,
-        **schedule
-    }
-    MockDB.schedule.append(new_schedule)
-    return new_schedule
+    # чтение по кондитеру
+    def get_by_confectioner(self, db: Session, confectioner_id: int):
+        return db.query(ScheduleEntry).filter(ScheduleEntry.confectioner_id == confectioner_id).all()
 
+    # чтение по временному диапазону
+    def get_by_time_range(self, db: Session, start: datetime, end: datetime):
+        return db.query(ScheduleEntry).filter(
+            ScheduleEntry.start_time >= start,
+            ScheduleEntry.end_time <= end
+        ).all()
 
-def update(schedule_id: int, data: dict):
-    schedule = get_by_id(schedule_id)
-    if schedule:
-        schedule.update(data)
-    return schedule
+    # проверка существования
+    def exists(self, db: Session, schedule_entry_id: int):
+        return db.query(ScheduleEntry).filter(ScheduleEntry.schedule_entry_id == schedule_entry_id).first() is not None
 
-
-def delete(schedule_id: int):
-    schedule = get_by_id(schedule_id)
-    if schedule:
-        MockDB.schedule.remove(schedule)
-        return True
-    return False
+    # безопасное создание
+    def safe_create(self, db: Session, data: dict):
+        schedule_entry = ScheduleEntry(**data)
+        db.add(schedule_entry)
+        db.commit()
+        db.refresh(schedule_entry)
+        return schedule_entry
