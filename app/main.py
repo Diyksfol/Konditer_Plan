@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from app.api import orders, schedule
 from app.repositories.database import Base, engine
-from app.models import order
+
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()

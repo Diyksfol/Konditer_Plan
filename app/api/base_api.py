@@ -7,7 +7,6 @@ class BaseAPI:
     def __init__(self, service):
         self.router = APIRouter()
         self.service = service
-
         self._register_routes()
 
     def _register_routes(self):

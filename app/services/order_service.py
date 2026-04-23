@@ -1,33 +1,31 @@
-from app.repositories import order_repo
+from datetime import datetime
+from app.services.base_service import BaseService
+from app.repositories.order_repo import OrderRepository
 from app.services.validation_service import validate_order
 from app.services.schedule_service import generate_schedule
 
-def get_all_orders():
-    return order_repo.get_all()
 
-def get_order(order_id: int):
-    return order_repo.get_by_id(order_id)
+class OrderService(BaseService):
 
-def create_order(order_data):
-    validate_order(order_data)
+    def __init__(self):
+        super().__init__(OrderRepository())
 
-    new_order = {
-        "order_id": len(order_repo.get_all()) + 1,
-        "recipe_id": order_data.recipe_id,
-        "quantity": order_data.quantity,
-        "delivery_date": order_data.delivery_date,
-        "status": "planned"
-    }
+    def create(self, db, order_data):
+        validate_order(order_data)
 
-    created_order = order_repo.create(new_order)
+        new_order = {
+            "recipe_id": order_data.recipe_id,
+            "quantity": order_data.quantity,
+            "delivery_date": order_data.delivery_date,
+            "status": "planned",
+            "created_at": datetime.now()
+        }
 
-    # генерация расписания
-    generate_schedule(created_order)
+        order = self.repo.safe_create(db, new_order)
 
-    return created_order
+        generate_schedule(order)
 
-def update_order(order_id: int, data: dict):
-    return order_repo.update(order_id, data)
+        return order
 
-def delete_order(order_id: int):
-    return order_repo.delete(order_id)
+    def get_by_status(self, db, status: str):
+        return self.repo.get_by_status(db, status)

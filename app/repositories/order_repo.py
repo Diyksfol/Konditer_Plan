@@ -1,37 +1,25 @@
-from app.repositories.mock_db import MockDB
+from sqlalchemy.orm import Session
+from app.repositories.base_repository import BaseRepository
+from app.models.order import Order
 
 
-# получить все заказы
-def get_all():
-    return MockDB.orders
+class OrderRepository(BaseRepository):
 
-# получить заказ по id
-def get_by_id(order_id: int):
-    return next((o for o in MockDB.orders if o["order_id"] == order_id), None)
+    def __init__(self):
+        super().__init__(Order)
 
-def create(order: dict):
-    new_order = {
-        "order_id": len(MockDB.orders) + 1,
-        "recipe_id": order["recipe_id"],
-        "quantity": order["quantity"],
-        "delivery_date": order["delivery_date"],
-        "status": "planned"
-    }
-    MockDB.orders.append(new_order)
-    return new_order
+    # чтение по статусу
+    def get_by_status(self, db: Session, status: str):
+        return db.query(Order).filter(Order.status == status).all()
 
-def update(order_id: int, data: dict):
-    order = get_by_id(order_id)
-    if order is None:
-        return None
+    # проверка существования
+    def exists(self, db: Session, order_id: int):
+        return db.query(Order).filter(Order.order_id == order_id).first() is not None
 
-    order.update(data)
-    return order
-
-def delete(order_id: int):
-    order = get_by_id(order_id)
-    if order is None:
-        return False
-
-    MockDB.orders.remove(order)
-    return True
+    # безопасное создание
+    def safe_create(self, db: Session, data: dict):
+        order = Order(**data)
+        db.add(order)
+        db.commit()
+        db.refresh(order)
+        return order
