@@ -20,6 +20,7 @@ app.include_router(inventories.router, prefix="/inventories", tags=["Inventories
 app.include_router(qualifications.router, prefix="/qualifications", tags=["Qualifications"])
 app.include_router(recipe_ingredients.router, prefix="/recipe-ingredients", tags=["Recipe Ingredients"])
 app.include_router(recipe_operations.router, prefix="/recipe-operations", tags=["Recipe Operations"])
+app.include_router(planning.router, prefix="/planning", tags=["Planning"])
 
 @app.get("/")
 def root():
@@ -36,6 +37,7 @@ def root():
             "inventories": "/inventories",
             "qualifications": "/qualifications",
             "recipe_ingredients": "/recipe-ingredients",
-            "recipe_operations": "/recipe-operations"
+            "recipe_operations": "/recipe-operations",
+            "planning": "/planning/run"
         }
     }

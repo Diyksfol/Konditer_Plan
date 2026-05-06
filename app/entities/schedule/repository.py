@@ -28,6 +28,30 @@ class ScheduleEntryRepository(BaseRepository):
             ScheduleEntry.end_time <= end
         ).all()
 
+    # чтение по оборудованию и времени с учетом пересечений
+    def get_by_equipment_and_time(self, db: Session, equipment_id: int, start: datetime, end: datetime):
+        return db.query(ScheduleEntry).filter(
+            ScheduleEntry.equipment_id == equipment_id,
+            ScheduleEntry.start_time < end,
+            ScheduleEntry.end_time > start
+        ).all()
+
+    # чтение по кондитеру и времени с учетом пересечений
+    def get_by_confectioner_and_time(self, db: Session, confectioner_id: int, start: datetime, end: datetime):
+        return db.query(ScheduleEntry).filter(
+            ScheduleEntry.confectioner_id == confectioner_id,
+            ScheduleEntry.start_time < end,
+            ScheduleEntry.end_time > start
+        ).all()
+
+    # удаление записей расписания для заказа
+    def delete_by_order_id(self, db: Session, order_id: int):
+        entries = self.get_by_order_id(db, order_id)
+        for entry in entries:
+            db.delete(entry)
+        db.commit()
+        return len(entries)
+
     # проверка существования
     def exists(self, db: Session, schedule_entry_id: int):
         return db.query(ScheduleEntry).filter(ScheduleEntry.schedule_entry_id == schedule_entry_id).first() is not None

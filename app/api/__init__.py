@@ -9,6 +9,7 @@ from app.entities.inventory import api as inventories
 from app.entities.qualification import api as qualifications
 from app.entities.recipe_ingredient import api as recipe_ingredients
 from app.entities.recipe_operation import api as recipe_operations
+from app.entities.planning import api as planning
 
 __all__ = [
     "orders",
@@ -22,4 +23,5 @@ __all__ = [
     "qualifications",
     "recipe_ingredients",
     "recipe_operations",
+    "planning",
 ]
