@@ -1,9 +1,9 @@
 from fastapi import HTTPException
 from datetime import date
 from sqlalchemy.orm import Session
-#from app.repositories.recipe_repo import RecipeRepository
+#from app.recipe.repository import RecipeRepository
 #from app.repositories.inventory import InventoryRepository
-from app.repositories.recipe_repo import get_ingredients
+from app.entities.recipe.repository import get_ingredients
 
 
 def validate_order(order_data, db: Session):
@@ -49,7 +49,7 @@ def validate_order(order_data, db: Session):
 
         if inventory.current_quantity < required:
             # Получаем название ингредиента
-            from app.models.ingredient import Ingredient
+            from app.entities.ingredient.model import Ingredient
             ingredient = db.query(Ingredient).filter(Ingredient.ingredient_id == ing.ingredient_id).first()
             ingredient_name = ingredient.name if ingredient else f"id={ing.ingredient_id}"
 

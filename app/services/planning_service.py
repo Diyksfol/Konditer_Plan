@@ -1,6 +1,9 @@
 from datetime import datetime, timedelta
 from fastapi import HTTPException
-from app.repositories import mock_db, schedule_repo, order_repo, recipe_repo
+from app.repositories import mock_db
+from app.entities.schedule import repository as schedule_repo
+from app.entities.order import repository as order_repo
+from app.entities.recipe import repository as recipe_repo
 
 
 def plan_order(order_id: int):

@@ -1,17 +1,6 @@
 from fastapi import FastAPI
-from app.api import (
-    orders,
-    schedule,
-    recipes,
-    confectioners,
-    equipment_types,
-    equipments,
-    ingredients,
-    inventories,
-    qualifications,
-    recipe_ingredients,
-    recipe_operations
-)
+from app.api import *
+
 from app.repositories.database import Base, engine
 
 # Создание таблиц в БД
