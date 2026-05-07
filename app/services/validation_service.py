@@ -1,9 +1,9 @@
 from fastapi import HTTPException
 from datetime import date
 from sqlalchemy.orm import Session
-#from app.recipe.repository import RecipeRepository
-#from app.repositories.inventory import InventoryRepository
-from app.entities.recipe.repository import get_ingredients
+from app.entities.recipe import RecipeRepository
+from app.entities.inventory import InventoryRepository
+from app.entities.recipe_ingredient import RecipeIngredientRepository
 
 
 def validate_order(order_data, db: Session):
@@ -12,21 +12,27 @@ def validate_order(order_data, db: Session):
     quantity = order_data.get("quantity")
     delivery_date = order_data.get("delivery_date")
 
-    """
     # 1. Проверяем существование рецепта
+    if recipe_id is None:
+        raise HTTPException(status_code=400, detail="recipe_id is required")
+    if quantity is None or quantity <= 0:
+        raise HTTPException(status_code=400, detail="quantity must be greater than zero")
+    if delivery_date is None:
+        raise HTTPException(status_code=400, detail="delivery_date is required")
+
     recipe_repo = RecipeRepository()
     recipe = recipe_repo.get_by_id(db, recipe_id)
 
     if not recipe:
         raise HTTPException(status_code=404, detail=f"Рецепт с id {recipe_id} не найден")
-    """
+
     # 2. Проверка даты доставки
     min_date = date.today()
     if delivery_date < min_date:
         raise HTTPException(status_code=400, detail="Дата доставки не может быть меньше текущей")
 
     # 3. Проверка ингредиентов
-    recipe_ingredients_repo = get_ingredients()
+    recipe_ingredients_repo = RecipeIngredientRepository()
     ingredients = recipe_ingredients_repo.get_by_recipe_id(db, recipe_id)
 
     if not ingredients:
@@ -36,12 +42,12 @@ def validate_order(order_data, db: Session):
 
     for ing in ingredients:
         # Получаем остаток ингредиента на складе
-        inventory = inventory_repo.get_by_ingredient_id(db, ing.ingredient_id)
+        inventory = inventory_repo.get_by_ingredient_id(db, ing.__ingredient_id__)
 
         if not inventory:
             raise HTTPException(
                 status_code=400,
-                detail=f"Ингредиент с id {ing.ingredient_id} не найден на складе"
+                detail=f"Ингредиент с id {ing.__ingredient_id__} не найден на складе"
             )
 
         # Рассчитываем требуемое количество

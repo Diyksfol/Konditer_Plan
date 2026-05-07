@@ -1,6 +1,7 @@
 from datetime import datetime
 from fastapi import HTTPException
 from app.services.base_service import BaseService
+from app.services.planning_service import PlanningService
 from .repository import OrderRepository
 from .validator import OrderValidator
 # from app.services.schedule_service import generate_schedule
@@ -38,9 +39,10 @@ class OrderService(BaseService):
         order = self.repo.safe_create(db, new_order)
 
         # Генерация расписания
-        # generate_schedule(order)
+        PlanningService().plan_order(db, order.order_id)
 
         return order
+
 
     def update(self, db, order_id, order_data): # type: ignore
         # Преобразуем в словарь если нужно

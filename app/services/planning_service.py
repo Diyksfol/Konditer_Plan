@@ -41,10 +41,10 @@ class PlanningService:
         results = []
         for order in orders:
             try:
-                self.plan_order(db, order.order_id)
-                results.append({"order_id": order.order_id, "status": "planned"})
+                self.plan_order(db, order.__order_id__)
+                results.append({"order_id": order.__order_id__, "status": "planned"})
             except HTTPException as exc:
-                results.append({"order_id": order.order_id, "status": "failed", "detail": exc.detail})
+                results.append({"order_id": order.__order_id__, "status": "failed", "detail": exc.detail})
 
         return {
             "status": "partial_success" if any(item["status"] == "failed" for item in results) else "success",
@@ -70,53 +70,53 @@ class PlanningService:
         schedule_entries = []
 
         for operation in reversed(operations):
-            duration = timedelta(minutes=operation.duration_minutes)
+            duration = timedelta(minutes=operation.__duration_minutes__)
             start_time = current_end - duration
 
             confectioner = self._find_available_confectioner(
                 db,
                 start_time,
                 current_end,
-                operation.required_qualification_id
+                operation.__required_qualification_id__
             )
             if not confectioner:
                 raise HTTPException(status_code=400, detail="Нет доступных кондитеров для операции")
 
             equipment_id = None
-            if operation.equipment_type_id:
+            if operation.__equipment_type_id__:
                 equipment = self._find_available_equipment(
                     db,
-                    operation.equipment_type_id,
+                    operation.__equipment_type_id__,
                     start_time,
                     current_end
                 )
                 if not equipment:
                     raise HTTPException(status_code=400, detail="Нет доступного оборудования для операции")
-                equipment_id = equipment.equipment_id
+                equipment_id = equipment.__equipment_id__
 
             entry = self._create_schedule_entry(
                 db,
-                order.order_id,
-                operation.recipe_operation_id,
+                order.__order_id__,
+                operation.__recipe_operation_id__,
                 start_time,
                 current_end,
                 equipment_id,
-                confectioner.confectioner_id
+                confectioner.__confectioner_id__
             )
             schedule_entries.append(entry)
             current_end = start_time
 
         return {
-            "order_id": order.order_id,
+            "order_id": order.__order_id__,
             "schedule_entries": [
                 {
-                    "schedule_entry_id": entry.schedule_entry_id,
-                    "recipe_operation_id": entry.recipe_operation_id,
-                    "start_time": entry.start_time,
-                    "end_time": entry.end_time,
-                    "equipment_id": entry.equipment_id,
-                    "confectioner_id": entry.confectioner_id,
-                    "status": entry.status
+                    "schedule_entry_id": entry.__schedule_entry_id__,
+                    "recipe_operation_id": entry.__recipe_operation_id__,
+                    "start_time": entry.__start_time__,
+                    "end_time": entry.__end_time__,
+                    "equipment_id": entry.__equipment_id__,
+                    "confectioner_id": entry.__confectioner_id__,
+                    "status": entry.__status__
                 }
                 for entry in schedule_entries
             ]
@@ -126,11 +126,11 @@ class PlanningService:
         """Ищем активного кондитера без пересечения текущего интервала."""
         confectioners = self.confectioner_repo.get_active(db)
         for confectioner in confectioners:
-            if qualification_id and confectioner.qualification_id != qualification_id:
+            if qualification_id and confectioner.__qualification_id__ != qualification_id:
                 continue
 
             if not self.schedule_repo.get_by_confectioner_and_time(
-                    db, confectioner.confectioner_id, start_time, end_time):
+                    db, confectioner.__confectioner_id__, start_time, end_time):
                 return confectioner
 
         return None
@@ -139,10 +139,10 @@ class PlanningService:
         """Ищем активное оборудование нужного типа без конфликта."""
         equipments = self.equipment_repo.get_by_equipment_type(db, equipment_type_id)
         for equipment in equipments:
-            if not getattr(equipment, "is_active", False):
+            if not equipment.__is_active__:
                 continue
 
-            if not self.schedule_repo.get_by_equipment_and_time(db, equipment.equipment_id, start_time, end_time):
+            if not self.schedule_repo.get_by_equipment_and_time(db, equipment.__equipment_id__, start_time, end_time):
                 return equipment
 
         return None
