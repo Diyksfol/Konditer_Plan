@@ -42,12 +42,12 @@ def validate_order(order_data, db: Session):
 
     for ing in ingredients:
         # Получаем остаток ингредиента на складе
-        inventory = inventory_repo.get_by_ingredient_id(db, ing.__ingredient_id__)
+        inventory = inventory_repo.get_by_ingredient_id(db, ing.ingredient_id)
 
         if not inventory:
             raise HTTPException(
                 status_code=400,
-                detail=f"Ингредиент с id {ing.__ingredient_id__} не найден на складе"
+                detail=f"Ингредиент с id {ing.ingredient_id} не найден на складе"
             )
 
         # Рассчитываем требуемое количество
