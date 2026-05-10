@@ -23,3 +23,13 @@ class OrderRepository(BaseRepository):
         db.commit()
         db.refresh(order)
         return order
+
+    # обновление статуса
+    def update_status(self, db: Session, order_id: int, status: str):
+        order = db.query(Order).filter(Order.order_id == order_id).first()
+        if order:
+            order.status = status
+            db.commit()
+            db.refresh(order)
+            return order
+        return None

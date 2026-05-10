@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 
 interface IngredientFormProps {
@@ -16,9 +16,34 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, onClose, onSubm
     min_quantity: initialData?.min_quantity || '',
   });
 
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        name: initialData.name || '',
+        unit: initialData.unit || '',
+        current_quantity: initialData.current_quantity || '',
+        min_quantity: initialData.min_quantity || '',
+      });
+    } else {
+      setFormData({
+        name: '',
+        unit: '',
+        current_quantity: '',
+        min_quantity: '',
+      });
+    }
+  }, [initialData, isOpen]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    // Отправляем только заполненные поля
+    const dataToSubmit: any = {};
+    if (formData.name.trim()) dataToSubmit.name = formData.name.trim();
+    if (formData.unit.trim()) dataToSubmit.unit = formData.unit.trim();
+    if (formData.current_quantity !== '') dataToSubmit.current_quantity = parseFloat(formData.current_quantity);
+    if (formData.min_quantity !== '') dataToSubmit.min_quantity = parseFloat(formData.min_quantity);
+
+    onSubmit(dataToSubmit);
     onClose();
   };
 
@@ -31,7 +56,7 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, onClose, onSubm
             type="text"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
+            placeholder="Оставьте пустым, чтобы не менять"
           />
         </div>
         <div className="form-group">
@@ -40,7 +65,7 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, onClose, onSubm
             type="text"
             value={formData.unit}
             onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-            required
+            placeholder="Оставьте пустым, чтобы не менять"
           />
         </div>
         <div className="form-group">
@@ -50,7 +75,7 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, onClose, onSubm
             step="0.01"
             value={formData.current_quantity}
             onChange={(e) => setFormData({ ...formData, current_quantity: e.target.value })}
-            required
+            placeholder="Оставьте пустым, чтобы не менять"
           />
         </div>
         <div className="form-group">
@@ -60,7 +85,7 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, onClose, onSubm
             step="0.01"
             value={formData.min_quantity}
             onChange={(e) => setFormData({ ...formData, min_quantity: e.target.value })}
-            required
+            placeholder="Оставьте пустым, чтобы не менять"
           />
         </div>
         <div className="form-actions">

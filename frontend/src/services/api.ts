@@ -16,11 +16,11 @@ class ApiService {
 
   // Orders
   async getOrders(): Promise<Order[]> {
-    return this.request('/orders');
+    return this.request('/orders/');
   }
 
   async createOrder(data: Partial<Order>): Promise<Order> {
-    return this.request('/orders', {
+    return this.request('/orders/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -41,11 +41,11 @@ class ApiService {
 
   // Schedule
   async getSchedule(): Promise<ScheduleEntry[]> {
-    return this.request('/schedule');
+    return this.request('/schedule/');
   }
 
   async createSchedule(data: Partial<ScheduleEntry>): Promise<ScheduleEntry> {
-    return this.request('/schedule', {
+    return this.request('/schedule/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -75,11 +75,11 @@ class ApiService {
 
   // Ingredients
   async getIngredients(): Promise<Ingredient[]> {
-    return this.request('/ingredients');
+    return this.request('/ingredients/');
   }
 
   async createIngredient(data: Partial<Ingredient>): Promise<Ingredient> {
-    return this.request('/ingredients', {
+    return this.request('/ingredients/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -100,11 +100,11 @@ class ApiService {
 
   // Inventories
   async getInventories(): Promise<Inventory[]> {
-    return this.request('/inventories');
+    return this.request('/inventories/');
   }
 
   async createInventory(data: Partial<Inventory>): Promise<Inventory> {
-    return this.request('/inventories', {
+    return this.request('/inventories/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -125,11 +125,11 @@ class ApiService {
 
   // Recipes
   async getRecipes(): Promise<Recipe[]> {
-    return this.request('/recipes');
+    return this.request('/recipes/');
   }
 
   async createRecipe(data: Partial<Recipe>): Promise<Recipe> {
-    return this.request('/recipes', {
+    return this.request('/recipes/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -150,11 +150,11 @@ class ApiService {
 
   // Recipe Operations
   async getRecipeOperations(): Promise<RecipeOperation[]> {
-    return this.request('/recipe-operations');
+    return this.request('/recipe-operations/');
   }
 
   async createRecipeOperation(data: Partial<RecipeOperation>): Promise<RecipeOperation> {
-    return this.request('/recipe-operations', {
+    return this.request('/recipe-operations/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -175,11 +175,11 @@ class ApiService {
 
   // Recipe Ingredients
   async getRecipeIngredients(): Promise<RecipeIngredient[]> {
-    return this.request('/recipe-ingredients');
+    return this.request('/recipe-ingredients/');
   }
 
   async createRecipeIngredient(data: Partial<RecipeIngredient>): Promise<RecipeIngredient> {
-    return this.request('/recipe-ingredients', {
+    return this.request('/recipe-ingredients/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -200,11 +200,11 @@ class ApiService {
 
   // Confectioners
   async getConfectioners(): Promise<Confectioner[]> {
-    return this.request('/confectioners');
+    return this.request('/confectioners/');
   }
 
   async createConfectioner(data: Partial<Confectioner>): Promise<Confectioner> {
-    return this.request('/confectioners', {
+    return this.request('/confectioners/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -225,11 +225,11 @@ class ApiService {
 
   // Qualifications
   async getQualifications(): Promise<Qualification[]> {
-    return this.request('/qualifications');
+    return this.request('/qualifications/');
   }
 
   async createQualification(data: Partial<Qualification>): Promise<Qualification> {
-    return this.request('/qualifications', {
+    return this.request('/qualifications/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -250,11 +250,11 @@ class ApiService {
 
   // Equipment Types
   async getEquipmentTypes(): Promise<EquipmentType[]> {
-    return this.request('/equipment-types');
+    return this.request('/equipment-types/');
   }
 
   async createEquipmentType(data: Partial<EquipmentType>): Promise<EquipmentType> {
-    return this.request('/equipment-types', {
+    return this.request('/equipment-types/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -275,11 +275,11 @@ class ApiService {
 
   // Equipment
   async getEquipment(): Promise<Equipment[]> {
-    return this.request('/equipment');
+    return this.request('/equipments/');
   }
 
   async createEquipment(data: Partial<Equipment>): Promise<Equipment> {
-    return this.request('/equipment', {
+    return this.request('/equipments/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -287,7 +287,7 @@ class ApiService {
   }
 
   async updateEquipment(id: number, data: Partial<Equipment>): Promise<Equipment> {
-    return this.request(`/equipment/${id}`, {
+    return this.request(`/equipments/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -295,8 +295,9 @@ class ApiService {
   }
 
   async deleteEquipment(id: number): Promise<void> {
-    return this.request(`/equipment/${id}`, { method: 'DELETE' });
+    return this.request(`/equipments/${id}`, { method: 'DELETE' });
   }
 }
 
-export default new ApiService();
+const api = new ApiService();
+export default api;

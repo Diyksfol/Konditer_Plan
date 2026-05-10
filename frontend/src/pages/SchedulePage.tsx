@@ -3,17 +3,19 @@ import { useSchedule } from '../hooks/useSchedule';
 import { useEquipments } from '../hooks/useEquipments';
 import { useConfectioners } from '../hooks/useConfectioners';
 import { useRecipes } from '../hooks/useRecipes';
+import { useRecipeOperations } from '../hooks/useRecipeOperations';
 import api from '../services/api';
 import ConfectionerForm from '../components/ConfectionerForm';
 import EquipmentForm from '../components/EquipmentForm';
 import { confirmDelete } from '../utils/helpers';
-import { ScheduleEntry, Equipment, Confectioner, Recipe } from '../types';
+import { ScheduleEntry, Equipment, Confectioner, Recipe, RecipeOperation } from '../types';
 
 const SchedulePage: React.FC = () => {
   const { schedule, loading, error, refetch } = useSchedule();
   const { equipments } = useEquipments();
   const { confectioners } = useConfectioners();
   const { recipes } = useRecipes();
+  const { recipeOperations } = useRecipeOperations();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [isConfectionerModalOpen, setIsConfectionerModalOpen] = useState(false);
   const [isEquipmentModalOpen, setIsEquipmentModalOpen] = useState(false);
@@ -47,13 +49,18 @@ const SchedulePage: React.FC = () => {
     return confectioner ? confectioner.name : `Кондитер ${confectionerId}`;
   };
 
+  const getOperationForEntry = (operationId: number) => {
+    return recipeOperations.find((op: RecipeOperation) => op.recipe_operation_id === operationId);
+  };
+
   const handleRunPlanning = async () => {
     try {
-      await api.runPlanning();
+      const result = await api.runPlanning();
       refetch();
-      alert('Планирование выполнено');
-    } catch (err) {
-      alert('Ошибка при планировании');
+      alert(`Планирование выполнено: ${result.status}`);
+    } catch (err: any) {
+      console.error('Planning error:', err);
+      alert(`Ошибка при планировании: ${err.message || 'Неизвестная ошибка'}`);
     }
   };
 
@@ -155,7 +162,10 @@ const SchedulePage: React.FC = () => {
                         <div key={entry.schedule_entry_id} className="schedule-entry">
                           {getRecipeName(entry.order_id)} - {getConfectionerName(entry.confectioner_id)}
                           <br />
-                          {entry.operation_name} x{entry.product_quantity}
+                          {(() => {
+                            const operation = getOperationForEntry(entry.recipe_operation_id);
+                            return operation ? `${operation.operation_name} x${operation.product_quantity}` : `Операция ${entry.recipe_operation_id}`;
+                          })()}
                         </div>
                       ))}
                     </td>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 
 interface RecipeFormProps {
@@ -14,9 +14,28 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ isOpen, onClose, onSubmit, init
     shelf_life_days: initialData?.shelf_life_days || '',
   });
 
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        name: initialData.name || '',
+        shelf_life_days: initialData.shelf_life_days || '',
+      });
+    } else {
+      setFormData({
+        name: '',
+        shelf_life_days: '',
+      });
+    }
+  }, [initialData, isOpen]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    // Отправляем только заполненные поля
+    const dataToSubmit: any = {};
+    if (formData.name.trim()) dataToSubmit.name = formData.name.trim();
+    if (formData.shelf_life_days !== '') dataToSubmit.shelf_life_days = parseInt(formData.shelf_life_days);
+
+    onSubmit(dataToSubmit);
     onClose();
   };
 
@@ -29,7 +48,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ isOpen, onClose, onSubmit, init
             type="text"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
+            placeholder="Оставьте пустым, чтобы не менять"
           />
         </div>
         <div className="form-group">
@@ -38,7 +57,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ isOpen, onClose, onSubmit, init
             type="number"
             value={formData.shelf_life_days}
             onChange={(e) => setFormData({ ...formData, shelf_life_days: e.target.value })}
-            required
+            placeholder="Оставьте пустым, чтобы не менять"
           />
         </div>
         <div className="form-actions">

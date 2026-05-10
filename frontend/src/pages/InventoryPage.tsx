@@ -8,7 +8,7 @@ import { Ingredient, Inventory } from '../types';
 
 const InventoryPage: React.FC = () => {
   const { ingredients, refetch: refetchIngredients } = useIngredients();
-  const { inventories, refetch: refetchInventories } = useInventories();
+  const { inventories } = useInventories();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
 

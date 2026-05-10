@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.api import *
 
 from app.repositories.database import Base, engine
@@ -7,6 +8,14 @@ from app.repositories.database import Base, engine
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Confectionery Management API", description="API для управления кондитерским производством")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:3001"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Подключение всех роутеров
 app.include_router(orders.router, prefix="/orders", tags=["Orders"])

@@ -1,3 +1,14 @@
 {
-    "python.analysis.typeCheckingMode": "standard"
+    "python.analysis.typeCheckingMode": "standard",
+    "chat.tools.terminal.autoApprove": {
+        "/^python --version ; which python$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "where": true,
+        "/^python -c \"import sqlalchemy; print\\('SQLAlchemy installed'\\)\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
 }

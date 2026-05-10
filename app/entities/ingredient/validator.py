@@ -16,13 +16,23 @@ class IngredientValidator:
                 raise HTTPException(400, "Единица измерения обязательна")
 
         if not is_update or 'current_quantity' in data:
-            current_quantity = data.get('current_quantity', 0)
-            if current_quantity < 0:
-                raise HTTPException(400, "Текущее количество не может быть отрицательным")
+            current_quantity_str = data.get('current_quantity', '0')
+            try:
+                current_quantity = float(current_quantity_str)
+                if current_quantity < 0:
+                    raise HTTPException(400, "Текущее количество не может быть отрицательным")
+                data['current_quantity'] = current_quantity
+            except ValueError:
+                raise HTTPException(400, "Текущее количество должно быть числом")
 
         if not is_update or 'min_quantity' in data:
-            min_quantity = data.get('min_quantity', 0)
-            if min_quantity < 0:
-                raise HTTPException(400, "Минимальное количество не может быть отрицательным")
+            min_quantity_str = data.get('min_quantity', '0')
+            try:
+                min_quantity = float(min_quantity_str)
+                if min_quantity < 0:
+                    raise HTTPException(400, "Минимальное количество не может быть отрицательным")
+                data['min_quantity'] = min_quantity
+            except ValueError:
+                raise HTTPException(400, "Минимальное количество должно быть числом")
 
         return data

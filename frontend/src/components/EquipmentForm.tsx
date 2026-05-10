@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
+import { useEquipmentTypes } from '../hooks/useEquipmentTypes';
 
 interface EquipmentFormProps {
   isOpen: boolean;
@@ -9,15 +10,38 @@ interface EquipmentFormProps {
 }
 
 const EquipmentForm: React.FC<EquipmentFormProps> = ({ isOpen, onClose, onSubmit, initialData }) => {
+  const { equipmentTypes } = useEquipmentTypes();
   const [formData, setFormData] = useState({
     equipment_name: initialData?.equipment_name || '',
     equipment_type_id: initialData?.equipment_type_id || '',
     is_active: initialData?.is_active ?? true,
   });
 
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        equipment_name: initialData.equipment_name || '',
+        equipment_type_id: initialData.equipment_type_id || '',
+        is_active: initialData.is_active ?? true,
+      });
+    } else {
+      setFormData({
+        equipment_name: '',
+        equipment_type_id: '',
+        is_active: true,
+      });
+    }
+  }, [initialData, isOpen]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    // Отправляем только заполненные поля
+    const dataToSubmit: any = {};
+    if (formData.equipment_name.trim()) dataToSubmit.equipment_name = formData.equipment_name.trim();
+    if (formData.equipment_type_id) dataToSubmit.equipment_type_id = parseInt(formData.equipment_type_id);
+    dataToSubmit.is_active = formData.is_active; // boolean всегда отправляем
+
+    onSubmit(dataToSubmit);
     onClose();
   };
 
@@ -30,17 +54,22 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ isOpen, onClose, onSubmit
             type="text"
             value={formData.equipment_name}
             onChange={(e) => setFormData({ ...formData, equipment_name: e.target.value })}
-            required
+            placeholder="Оставьте пустым, чтобы не менять"
           />
         </div>
         <div className="form-group">
-          <label>Тип оборудования ID:</label>
-          <input
-            type="number"
+          <label>Тип оборудования:</label>
+          <select
             value={formData.equipment_type_id}
             onChange={(e) => setFormData({ ...formData, equipment_type_id: e.target.value })}
-            required
-          />
+          >
+            <option value="">Выберите тип оборудования</option>
+            {equipmentTypes.map((type: any) => (
+              <option key={type.equipment_type_id} value={type.equipment_type_id}>
+                {type.equipment_type_id} - {type.type_name}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="form-group">
           <label>Активно:</label>

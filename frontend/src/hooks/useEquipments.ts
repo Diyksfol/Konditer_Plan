@@ -9,7 +9,7 @@ export const useEquipments = () => {
 
   const fetchEquipments = async () => {
     try {
-      const data = await api.getEquipments();
+      const data = await api.getEquipment();
       setEquipments(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
