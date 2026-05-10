@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timedelta
+﻿from datetime import datetime, timedelta, time
 from typing import Optional
 
 from fastapi import HTTPException
@@ -7,6 +7,9 @@ from app.entities.equipment.repository import EquipmentRepository
 from app.entities.order.repository import OrderRepository
 from app.entities.recipe_operation.repository import RecipeOperationRepository
 from app.entities.schedule.repository import ScheduleEntryRepository
+
+WORK_START = time(9)
+WORK_END = time(18)
 
 
 class PlanningService:
@@ -19,11 +22,6 @@ class PlanningService:
         self.schedule_repo = ScheduleEntryRepository()
 
     def run(self, db, order_id: Optional[int] = None):
-        """Запуск алгоритма планирования.
-
-        Если передан order_id, планирование выполняется только для конкретного заказа.
-        Если order_id не указан, производится планирование для всех заказов со статусом "planned".
-        """
         if order_id is not None:
             result = self.plan_order(db, order_id)
             return {
@@ -52,10 +50,6 @@ class PlanningService:
         }
 
     def plan_order(self, db, order_id: int):
-        """Планирование одного заказа и сохранение расписания.
-
-        Если для заказа уже были записи расписания, они удаляются перед новым построением.
-        """
         order = self.order_repo.get_by_id(db, order_id)
         if not order:
             raise HTTPException(status_code=404, detail="Заказ не найден")
@@ -66,12 +60,16 @@ class PlanningService:
 
         self.schedule_repo.delete_by_order_id(db, order_id)
 
-        current_end = datetime.combine(order.delivery_date, datetime.min.time())
+        current_end = datetime.combine(order.delivery_date, WORK_END)
         schedule_entries = []
 
         for operation in reversed(operations):
             duration = timedelta(minutes=operation.duration_minutes)
             start_time = current_end - duration
+
+        
+            start_time = self._fit_into_workday(start_time, current_end, duration)
+            current_end = start_time + duration
 
             confectioner = self._find_available_confectioner(
                 db,
@@ -106,7 +104,8 @@ class PlanningService:
             schedule_entries.append(entry)
             current_end = start_time
 
-        self.order_repo.update(db, order_id, {"status": "scheduled"})
+        
+        self.order_repo.update_status(db, order_id, "scheduled")
 
         return {
             "order_id": order.order_id,
@@ -124,29 +123,47 @@ class PlanningService:
             ]
         }
 
+    def _fit_into_workday(self, start_time: datetime, current_end: datetime, duration: timedelta) -> datetime:
+        """
+        Если start_time выходит за начало рабочего дня,
+        переносим операцию на конец предыдущего рабочего дня.
+        """
+        workday_minutes = (
+            datetime.combine(start_time.date(), WORK_END) -
+            datetime.combine(start_time.date(), WORK_START)
+        ).seconds // 60  # = 540 минут (9 часов)
+
+        if duration.total_seconds() / 60 > workday_minutes:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Длительность операции ({int(duration.total_seconds() // 60)} мин) превышает рабочий день (540 мин)"
+            )
+
+        day_work_start = datetime.combine(start_time.date(), WORK_START)
+        if start_time < day_work_start:
+            # Переносим на конец предыдущего рабочего дня
+            previous_day_end = datetime.combine(current_end.date() - timedelta(days=1), WORK_END)
+            start_time = previous_day_end - duration
+
+        return start_time
+
     def _find_available_confectioner(self, db, start_time: datetime, end_time: datetime, qualification_id: Optional[int]):
-        """Ищем активного кондитера без пересечения текущего интервала."""
         confectioners = self.confectioner_repo.get_active(db)
         for confectioner in confectioners:
             if qualification_id and confectioner.qualification_id != qualification_id:
                 continue
-
             if not self.schedule_repo.get_by_confectioner_and_time(
                     db, confectioner.confectioner_id, start_time, end_time):
                 return confectioner
-
         return None
 
     def _find_available_equipment(self, db, equipment_type_id: int, start_time: datetime, end_time: datetime):
-        """Ищем активное оборудование нужного типа без конфликта."""
         equipments = self.equipment_repo.get_by_equipment_type(db, equipment_type_id)
         for equipment in equipments:
             if not equipment.is_active:
                 continue
-
             if not self.schedule_repo.get_by_equipment_and_time(db, equipment.equipment_id, start_time, end_time):
                 return equipment
-
         return None
 
     def _create_schedule_entry(self, db, order_id: int, recipe_operation_id: int, start_time: datetime,
