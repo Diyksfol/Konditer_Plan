@@ -8,8 +8,8 @@ from app.entities.order.repository import OrderRepository
 from app.entities.recipe_operation.repository import RecipeOperationRepository
 from app.entities.schedule.repository import ScheduleEntryRepository
 
-WORK_START = time(9)
-WORK_END = time(18)
+WORK_START = time(9, 0)
+WORK_END = time(18, 0)
 
 
 class PlanningService:
