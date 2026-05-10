@@ -106,6 +106,8 @@ class PlanningService:
             schedule_entries.append(entry)
             current_end = start_time
 
+        self.order_repo.update(db, order_id, {"status": "scheduled"})
+
         return {
             "order_id": order.order_id,
             "schedule_entries": [
