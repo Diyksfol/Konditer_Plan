@@ -22,18 +22,13 @@ export interface ScheduleEntry {
 
 export interface Ingredient {
   ingredient_id: number;
-  name: string;
+  ingredient_name: string;
   unit: string;
-  current_quantity: number;
-  min_quantity: number;
-  created_at: string;
-  updated_at: string;
 }
 
 export interface Inventory {
   inventory_id: number;
   ingredient_id: number;
-  unit: string;
   current_quantity: number;
   min_stock: number;
   last_check: string;
@@ -54,6 +49,7 @@ export interface RecipeOperation {
   required_qualification_id: number;
   operation_name: string;
   product_quantity: number;
+  unit?: string;
 }
 
 export interface RecipeIngredient {
@@ -77,7 +73,7 @@ export interface Qualification {
 
 export interface EquipmentType {
   equipment_type_id: number;
-  name: string;
+  equipment_name: string;
 }
 
 export interface Equipment {

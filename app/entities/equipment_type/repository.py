@@ -9,8 +9,8 @@ class EquipmentTypeRepository(BaseRepository):
         super().__init__(EquipmentType)
 
     # чтение по имени
-    def get_by_name(self, db: Session, name: str):
-        return db.query(EquipmentType).filter(EquipmentType.name == name).first()
+    def get_by_equipment_name(self, db: Session, equipment_name: str):
+        return db.query(EquipmentType).filter(EquipmentType.equipment_name == equipment_name).first()
 
     # проверка существования
     def exists(self, db: Session, equipment_type_id: int):

@@ -7,7 +7,6 @@ class Inventory(Base):
 
     inventory_id = Column(Integer, primary_key=True, index=True)
     ingredient_id = Column(Integer, ForeignKey("ingredients.ingredient_id", ondelete="RESTRICT", onupdate="CASCADE"))
-    unit = Column(String(20))
     current_quantity = Column(Numeric(10, 3), default=0.000)
     min_stock = Column(Numeric(10, 3), default=0.000)
     last_check = Column(TIMESTAMP, default="CURRENT_TIMESTAMP")

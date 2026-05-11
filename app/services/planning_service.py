@@ -58,23 +58,41 @@ class PlanningService:
         if not operations:
             raise HTTPException(status_code=400, detail="Для рецепта не найдены операции")
 
+        # Sort operations by sequence_number ascending
+        operations = sorted(operations, key=lambda op: op.sequence_number)
+
         self.schedule_repo.delete_by_order_id(db, order_id)
 
-        current_end = datetime.combine(order.delivery_date, WORK_END)
+        # Calculate total duration
+        total_duration = sum((timedelta(minutes=op.duration_minutes) for op in operations), timedelta(0))
+        workday_duration = datetime.combine(datetime.today(), WORK_END) - datetime.combine(datetime.today(), WORK_START)
+
+        # Determine start date
+        if total_duration > workday_duration:
+            # If total time exceeds workday, move to previous day
+            start_date = order.delivery_date - timedelta(days=1)
+        else:
+            start_date = order.delivery_date
+
+        current_start = datetime.combine(start_date, WORK_START)
         schedule_entries = []
 
-        for operation in reversed(operations):
+        for operation in operations:
             duration = timedelta(minutes=operation.duration_minutes)
-            start_time = current_end - duration
+            start_time = current_start
+            end_time = start_time + duration
 
-        
-            start_time = self._fit_into_workday(start_time, current_end, duration)
-            current_end = start_time + duration
+            # Check if operation fits in workday
+            if end_time.time() > WORK_END:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Операция '{operation.operation_name}' не помещается в рабочий день. Общее время превышает доступное."
+                )
 
             confectioner = self._find_available_confectioner(
                 db,
                 start_time,
-                current_end,
+                end_time,
                 operation.required_qualification_id
             )
             if not confectioner:
@@ -86,7 +104,7 @@ class PlanningService:
                     db,
                     operation.equipment_type_id,
                     start_time,
-                    current_end
+                    end_time
                 )
                 if not equipment:
                     raise HTTPException(status_code=400, detail="Нет доступного оборудования для операции")
@@ -97,14 +115,13 @@ class PlanningService:
                 order.order_id,
                 operation.recipe_operation_id,
                 start_time,
-                current_end,
+                end_time,
                 equipment_id,
                 confectioner.confectioner_id
             )
             schedule_entries.append(entry)
-            current_end = start_time
+            current_start = end_time
 
-        
         self.order_repo.update_status(db, order_id, "scheduled")
 
         return {

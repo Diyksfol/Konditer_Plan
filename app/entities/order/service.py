@@ -59,3 +59,15 @@ class OrderService(BaseService):
 
     def get_by_status(self, db, status: str):
         return self.repo.get_by_status(db, status)
+
+    def delete(self, db, order_id: int):
+        """Delete order and all associated schedule entries"""
+        # Import here to avoid circular imports
+        from app.entities.schedule.repository import ScheduleEntryRepository
+        
+        # Delete all schedule entries for this order
+        schedule_repo = ScheduleEntryRepository()
+        schedule_repo.delete_by_order_id(db, order_id)
+        
+        # Delete the order
+        return super().delete(db, order_id)

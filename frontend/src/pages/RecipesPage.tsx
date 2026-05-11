@@ -26,8 +26,15 @@ const RecipesPage: React.FC = () => {
 
   const handleCreate = async (data: any) => {
     try {
-      await api.createRecipe(data);
+      const newRecipe = await api.createRecipe(data);
       refetchRecipes();
+      // После создания рецепта открыть модал для добавления операций
+      setTimeout(() => {
+        setCurrentRecipeId(newRecipe.recipe_id);
+        setEditingOperation(null);
+        setIsOperationModalOpen(true);
+        setExpandedRecipe(newRecipe.recipe_id); // Развернуть рецепт
+      }, 100);
     } catch (err) {
       alert('Ошибка при создании рецепта');
     }
@@ -179,12 +186,15 @@ const RecipesPage: React.FC = () => {
 
   const getIngredientName = (ingredientId: number) => {
     const ingredient = ingredients.find((ing: any) => ing.ingredient_id === ingredientId);
-    return ingredient ? `${ingredient.name} (${ingredient.unit})` : `Ингредиент ${ingredientId}`;
+    return ingredient ? `${ingredient.ingredient_name} (${ingredient.unit})` : `Ингредиент ${ingredientId}`;
   };
 
   return (
     <div>
-      <h1>Рецептуры</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>Рецептуры</h1>
+        <h2>Кондитер.план</h2>
+      </div>
       <button onClick={openCreateModal}>Добавить рецепт</button>
       <div className="recipes-list">
         {recipes.map((recipe: Recipe) => (

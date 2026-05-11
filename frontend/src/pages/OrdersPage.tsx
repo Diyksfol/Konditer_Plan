@@ -67,7 +67,10 @@ const OrdersPage: React.FC = () => {
 
   return (
     <div>
-      <h1>Заказы</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>Заказы</h1>
+        <h2>Кондитер.план</h2>
+      </div>
       <button onClick={openCreateModal}>Добавить заказ</button>
       <table>
         <thead>

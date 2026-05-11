@@ -8,7 +8,7 @@ import { Ingredient, Inventory } from '../types';
 
 const InventoryPage: React.FC = () => {
   const { ingredients, refetch: refetchIngredients } = useIngredients();
-  const { inventories } = useInventories();
+  const { inventories, refetch: refetchInventories } = useInventories();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
 
@@ -33,8 +33,16 @@ const InventoryPage: React.FC = () => {
   const handleUpdate = async (data: any) => {
     if (!editingIngredient) return;
     try {
-      await api.updateIngredient(editingIngredient.ingredient_id, data);
+      const inventory = getInventoryForIngredient(editingIngredient.ingredient_id);
+      if (inventory && 'current_quantity' in data) {
+        // Update inventory if it exists and current_quantity is being changed
+        await api.updateInventory(inventory.inventory_id, { current_quantity: data.current_quantity });
+      } else {
+        // Otherwise update ingredient
+        await api.updateIngredient(editingIngredient.ingredient_id, data);
+      }
       refetchIngredients();
+      refetchInventories();
       setEditingIngredient(null);
     } catch (err) {
       alert('Ошибка при обновлении ингредиента');
@@ -48,6 +56,15 @@ const InventoryPage: React.FC = () => {
       refetchIngredients();
     } catch (err) {
       alert('Ошибка при удалении ингредиента');
+    }
+  };
+
+  const handleUpdateCheckDate = async (inventoryId: number) => {
+    try {
+      await api.updateInventoryCheckDate(inventoryId);
+      refetchInventories();
+    } catch (err) {
+      alert('Ошибка при обновлении даты проверки');
     }
   };
 
@@ -68,7 +85,10 @@ const InventoryPage: React.FC = () => {
 
   return (
     <div>
-      <h1>Склад</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>Склад</h1>
+        <h2>Кондитер.план</h2>
+      </div>
       <button onClick={openCreateModal}>Добавить ингредиент</button>
       <table>
         <thead>
@@ -89,14 +109,17 @@ const InventoryPage: React.FC = () => {
             return (
               <tr key={ingredient.ingredient_id} className={lowStock ? 'low-stock' : ''}>
                 <td>{ingredient.ingredient_id}</td>
-                <td>{ingredient.name}</td>
-                <td>{inventory?.unit || ingredient.unit}</td>
-                <td>{inventory?.current_quantity || ingredient.current_quantity}</td>
-                <td>{inventory?.min_stock || ingredient.min_quantity}</td>
+                <td>{ingredient.ingredient_name}</td>
+                <td>{ingredient.unit}</td>
+                <td>{inventory?.current_quantity || 0}</td>
+                <td>{inventory?.min_stock || 0}</td>
                 <td>{inventory ? formatDate(inventory.last_check) : 'N/A'}</td>
                 <td>
                   <button onClick={() => openEditModal(ingredient)}>Редактировать</button>
                   <button onClick={() => handleDelete(ingredient.ingredient_id)}>Удалить</button>
+                  {inventory && (
+                    <button onClick={() => handleUpdateCheckDate(inventory.inventory_id)}>Проверить</button>
+                  )}
                 </td>
               </tr>
             );

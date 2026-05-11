@@ -9,12 +9,8 @@ class IngredientRepository(BaseRepository):
         super().__init__(Ingredient)
 
     # чтение по имени
-    def get_by_name(self, db: Session, name: str):
-        return db.query(Ingredient).filter(Ingredient.name == name).first()
-
-    # чтение с низким остатком
-    def get_low_stock(self, db: Session):
-        return db.query(Ingredient).filter(Ingredient.current_quantity <= Ingredient.min_quantity).all()
+    def get_by_ingredient_name(self, db: Session, ingredient_name: str):
+        return db.query(Ingredient).filter(Ingredient.ingredient_name == ingredient_name).first()
 
     # проверка существования
     def exists(self, db: Session, ingredient_id: int):

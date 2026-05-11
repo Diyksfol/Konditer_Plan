@@ -10,26 +10,20 @@ interface IngredientFormProps {
 
 const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, onClose, onSubmit, initialData }) => {
   const [formData, setFormData] = useState({
-    name: initialData?.name || '',
+    ingredient_name: initialData?.ingredient_name || '',
     unit: initialData?.unit || '',
-    current_quantity: initialData?.current_quantity || '',
-    min_quantity: initialData?.min_quantity || '',
   });
 
   useEffect(() => {
     if (initialData) {
       setFormData({
-        name: initialData.name || '',
+        ingredient_name: initialData.ingredient_name || '',
         unit: initialData.unit || '',
-        current_quantity: initialData.current_quantity || '',
-        min_quantity: initialData.min_quantity || '',
       });
     } else {
       setFormData({
-        name: '',
+        ingredient_name: '',
         unit: '',
-        current_quantity: '',
-        min_quantity: '',
       });
     }
   }, [initialData, isOpen]);
@@ -38,10 +32,8 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, onClose, onSubm
     e.preventDefault();
     // Отправляем только заполненные поля
     const dataToSubmit: any = {};
-    if (formData.name.trim()) dataToSubmit.name = formData.name.trim();
+    if (formData.ingredient_name.trim()) dataToSubmit.ingredient_name = formData.ingredient_name.trim();
     if (formData.unit.trim()) dataToSubmit.unit = formData.unit.trim();
-    if (formData.current_quantity !== '') dataToSubmit.current_quantity = parseFloat(formData.current_quantity);
-    if (formData.min_quantity !== '') dataToSubmit.min_quantity = parseFloat(formData.min_quantity);
 
     onSubmit(dataToSubmit);
     onClose();
@@ -54,39 +46,25 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, onClose, onSubm
           <label>Название:</label>
           <input
             type="text"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            value={formData.ingredient_name}
+            onChange={(e) => setFormData({ ...formData, ingredient_name: e.target.value })}
             placeholder="Оставьте пустым, чтобы не менять"
           />
         </div>
         <div className="form-group">
           <label>Единица измерения:</label>
-          <input
-            type="text"
+          <select
             value={formData.unit}
             onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-            placeholder="Оставьте пустым, чтобы не менять"
-          />
-        </div>
-        <div className="form-group">
-          <label>Текущее количество:</label>
-          <input
-            type="number"
-            step="0.01"
-            value={formData.current_quantity}
-            onChange={(e) => setFormData({ ...formData, current_quantity: e.target.value })}
-            placeholder="Оставьте пустым, чтобы не менять"
-          />
-        </div>
-        <div className="form-group">
-          <label>Минимальное количество:</label>
-          <input
-            type="number"
-            step="0.01"
-            value={formData.min_quantity}
-            onChange={(e) => setFormData({ ...formData, min_quantity: e.target.value })}
-            placeholder="Оставьте пустым, чтобы не менять"
-          />
+          >
+            <option value="">Выберите единицу</option>
+            <option value="кг">кг (килограммы)</option>
+            <option value="г">г (граммы)</option>
+            <option value="л">л (литры)</option>
+            <option value="мл">мл (миллилитры)</option>
+            <option value="шт">шт (штуки)</option>
+            <option value="дозы">дозы</option>
+          </select>
         </div>
         <div className="form-actions">
           <button type="submit">{initialData ? 'Обновить' : 'Создать'}</button>

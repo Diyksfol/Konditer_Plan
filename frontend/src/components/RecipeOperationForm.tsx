@@ -19,6 +19,8 @@ const RecipeOperationForm: React.FC<RecipeOperationFormProps> = ({ isOpen, onClo
     sequence_number: initialData?.sequence_number || '',
     equipment_type_id: initialData?.equipment_type_id || '',
     required_qualification_id: initialData?.required_qualification_id || '',
+    product_quantity: initialData?.product_quantity || '',
+    unit: initialData?.unit || '',
   });
 
   useEffect(() => {
@@ -29,6 +31,8 @@ const RecipeOperationForm: React.FC<RecipeOperationFormProps> = ({ isOpen, onClo
         sequence_number: initialData.sequence_number || '',
         equipment_type_id: initialData.equipment_type_id || '',
         required_qualification_id: initialData.required_qualification_id || '',
+        product_quantity: initialData.product_quantity || '',
+        unit: initialData.unit || '',
       });
     } else {
       setFormData({
@@ -37,6 +41,8 @@ const RecipeOperationForm: React.FC<RecipeOperationFormProps> = ({ isOpen, onClo
         sequence_number: '',
         equipment_type_id: '',
         required_qualification_id: '',
+        product_quantity: '',
+        unit: '',
       });
     }
   }, [initialData, isOpen]);
@@ -50,6 +56,8 @@ const RecipeOperationForm: React.FC<RecipeOperationFormProps> = ({ isOpen, onClo
     if (formData.sequence_number !== '') dataToSubmit.sequence_number = parseInt(formData.sequence_number);
     if (formData.equipment_type_id) dataToSubmit.equipment_type_id = parseInt(formData.equipment_type_id);
     if (formData.required_qualification_id) dataToSubmit.required_qualification_id = parseInt(formData.required_qualification_id);
+    if (formData.product_quantity !== '') dataToSubmit.product_quantity = parseFloat(formData.product_quantity);
+    if (formData.unit.trim()) dataToSubmit.unit = formData.unit.trim();
 
     onSubmit(dataToSubmit);
     onClose();
@@ -94,7 +102,7 @@ const RecipeOperationForm: React.FC<RecipeOperationFormProps> = ({ isOpen, onClo
             <option value="">Не требуется</option>
             {equipmentTypes.map((type: any) => (
               <option key={type.equipment_type_id} value={type.equipment_type_id}>
-                {type.equipment_type_id} - {type.type_name}
+                {type.type_name}
               </option>
             ))}
           </select>
@@ -111,6 +119,31 @@ const RecipeOperationForm: React.FC<RecipeOperationFormProps> = ({ isOpen, onClo
                 {qual.qualification_id} - {qual.name}
               </option>
             ))}
+          </select>
+        </div>
+        <div className="form-group">
+          <label>Количество выпускаемого продукта:</label>
+          <input
+            type="number"
+            step="0.01"
+            value={formData.product_quantity}
+            onChange={(e) => setFormData({ ...formData, product_quantity: e.target.value })}
+            placeholder="Оставьте пустым, чтобы не менять"
+          />
+        </div>
+        <div className="form-group">
+          <label>Единица измерения:</label>
+          <select
+            value={formData.unit}
+            onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+          >
+            <option value="">Выберите единицу</option>
+            <option value="кг">кг (килограммы)</option>
+            <option value="г">г (граммы)</option>
+            <option value="л">л (литры)</option>
+            <option value="мл">мл (миллилитры)</option>
+            <option value="шт">шт (штуки)</option>
+            <option value="дозы">дозы</option>
           </select>
         </div>
         <div className="form-actions">

@@ -123,6 +123,14 @@ class ApiService {
     return this.request(`/inventories/${id}`, { method: 'DELETE' });
   }
 
+  async updateInventoryCheckDate(id: number): Promise<Inventory> {
+    return this.request(`/inventories/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ last_check: new Date().toISOString() }),
+    });
+  }
+
   // Recipes
   async getRecipes(): Promise<Recipe[]> {
     return this.request('/recipes/');
