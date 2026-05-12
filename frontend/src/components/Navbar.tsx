@@ -19,12 +19,17 @@ const Navbar: React.FC = () => {
 
   return (
     <nav>
-      <ul>
-        <li><Link to="/orders">Заказы</Link></li>
-        <li><Link to="/schedule">Расписание</Link></li>
-        <li><Link to="/inventory" style={{ color: hasLowStock ? '#dc3545' : '#007bff', fontWeight: hasLowStock ? 'bold' : 'normal' }}>Склад</Link></li>
-        <li><Link to="/recipes">Рецептуры</Link></li>
-      </ul>
+      <div className="navbar-left">
+        <ul>
+          <li><Link to="/orders">Заказы</Link></li>
+          <li><Link to="/schedule">Расписание</Link></li>
+          <li><Link to="/inventory" style={{ color: hasLowStock ? '#dc3545' : '#007bff', fontWeight: hasLowStock ? 'bold' : 'normal' }}>Склад</Link></li>
+          <li><Link to="/recipes">Рецептуры</Link></li>
+        </ul>
+      </div>
+      <div className="navbar-right">
+        <span className="navbar-title">Кондитер.план</span>
+      </div>
     </nav>
   );
 };

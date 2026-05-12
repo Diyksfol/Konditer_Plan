@@ -83,72 +83,26 @@ class PlanningService:
 
         for operation in operations:
             duration = timedelta(minutes=operation.duration_minutes)
-            start_time = current_start
-            end_time = start_time + duration
-
-            # Check if operation fits in workday
-            if end_time.time() > WORK_END:
+            if duration > workday_duration:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Операция '{operation.operation_name}' не помещается в рабочий день. Общее время превышает доступное."
+                    detail=f"Операция '{operation.operation_name}' слишком длинная для рабочего дня."
                 )
 
-            confectioner = self._find_available_confectioner(
+            confectioner, equipment, start_time, end_time = self._find_best_slot_for_operation(
                 db,
-                start_time,
-                end_time,
-                operation.required_qualification_id
+                start_date,
+                current_start,
+                duration,
+                operation.required_qualification_id,
+                operation.equipment_type_id
             )
-            if not confectioner:
-                # Try to find a later slot
-                found_slot = False
-                temp_start = start_time
-                while temp_start + duration <= datetime.combine(start_date, WORK_END):
-                    temp_end = temp_start + duration
-                    confectioner = self._find_available_confectioner(
-                        db,
-                        temp_start,
-                        temp_end,
-                        operation.required_qualification_id
-                    )
-                    if confectioner:
-                        start_time = temp_start
-                        end_time = temp_end
-                        found_slot = True
-                        break
-                    temp_start += timedelta(minutes=30)
-                if not found_slot:
-                    raise HTTPException(status_code=400, detail="Нет доступных кондитеров для операции")
 
-            equipment_id = None
-            if operation.equipment_type_id:
-                equipment = self._find_available_equipment(
-                    db,
-                    operation.equipment_type_id,
-                    start_time,
-                    end_time
-                )
-                if not equipment:
-                    # Try to find a later slot
-                    found_slot = False
-                    temp_start = start_time
-                    while temp_start + duration <= datetime.combine(start_date, WORK_END):
-                        temp_end = temp_start + duration
-                        equipment = self._find_available_equipment(
-                            db,
-                            operation.equipment_type_id,
-                            temp_start,
-                            temp_end
-                        )
-                        if equipment:
-                            start_time = temp_start
-                            end_time = temp_end
-                            found_slot = True
-                            break
-                        temp_start += timedelta(minutes=30)
-                    if not found_slot:
-                        raise HTTPException(status_code=400, detail="Нет доступного оборудования для операции")
-                equipment_id = equipment.equipment_id
+            if not confectioner:
+                raise HTTPException(status_code=400, detail="Нет доступных кондитеров для операции")
+
+            if operation.equipment_type_id and not equipment:
+                raise HTTPException(status_code=400, detail="Нет доступного оборудования для операции")
 
             entry = self._create_schedule_entry(
                 db,
@@ -156,7 +110,7 @@ class PlanningService:
                 operation.recipe_operation_id,
                 start_time,
                 end_time,
-                equipment_id,
+                equipment.equipment_id if equipment else None,
                 confectioner.confectioner_id
             )
             schedule_entries.append(entry)
@@ -190,8 +144,8 @@ class PlanningService:
 
         now = datetime.now()
 
-        # Получить все заказы в статусе planned или in_progress
-        orders = order_repo.get_by_statuses(db, ["planned", "in_progress"])
+        # Получить все заказы в статусе planned, scheduled или in_progress
+        orders = order_repo.get_by_statuses(db, ["planned", "scheduled", "in_progress"])
 
         for order in orders:
             schedule_entries = schedule_repo.get_by_order_id(db, order.order_id)
@@ -222,6 +176,8 @@ class PlanningService:
                 order_repo.update_status(db, order.order_id, "completed")
             elif any_started:
                 order_repo.update_status(db, order.order_id, "in_progress")
+            elif order.status != "scheduled":
+                order_repo.update_status(db, order.order_id, "scheduled")
 
     def _fit_into_workday(self, start_time: datetime, current_end: datetime, duration: timedelta) -> datetime:
         """
@@ -247,24 +203,63 @@ class PlanningService:
 
         return start_time
 
+    def _find_best_slot_for_operation(self, db, start_date: datetime, current_start: datetime,
+                                      duration: timedelta, qualification_id: Optional[int], equipment_type_id: Optional[int]):
+        latest_end = datetime.combine(start_date, WORK_END)
+        search_start = current_start
+
+        while search_start + duration <= latest_end:
+            search_end = search_start + duration
+            confectioner = self._find_available_confectioner(
+                db,
+                search_start,
+                search_end,
+                qualification_id
+            )
+            if confectioner:
+                equipment = None
+                if equipment_type_id:
+                    equipment = self._find_available_equipment(
+                        db,
+                        equipment_type_id,
+                        search_start,
+                        search_end
+                    )
+                if equipment_type_id and not equipment:
+                    search_start += timedelta(minutes=5)
+                    continue
+                return confectioner, equipment, search_start, search_end
+            search_start += timedelta(minutes=5)
+
+        return None, None, None, None
+
     def _find_available_confectioner(self, db, start_time: datetime, end_time: datetime, qualification_id: Optional[int]):
         confectioners = self.confectioner_repo.get_active(db)
-        for confectioner in confectioners:
-            if qualification_id and confectioner.qualification_id < qualification_id:
-                continue
+        eligible = [c for c in confectioners if not qualification_id or c.qualification_id >= qualification_id]
+        eligible.sort(key=lambda c: (self._get_confectioner_load(db, c.confectioner_id), c.qualification_id))
+
+        for confectioner in eligible:
             if not self.schedule_repo.get_by_confectioner_and_time(
                     db, confectioner.confectioner_id, start_time, end_time):
                 return confectioner
         return None
 
     def _find_available_equipment(self, db, equipment_type_id: int, start_time: datetime, end_time: datetime):
-        equipments = self.equipment_repo.get_by_equipment_type(db, equipment_type_id)
+        equipments = [e for e in self.equipment_repo.get_by_equipment_type(db, equipment_type_id) if e.is_active]
+        equipments.sort(key=lambda e: self._get_equipment_load(db, e.equipment_id))
+
         for equipment in equipments:
-            if not equipment.is_active:
-                continue
             if not self.schedule_repo.get_by_equipment_and_time(db, equipment.equipment_id, start_time, end_time):
                 return equipment
         return None
+
+    def _get_confectioner_load(self, db, confectioner_id: int):
+        entries = self.schedule_repo.get_by_confectioner(db, confectioner_id)
+        return sum(int((entry.end_time - entry.start_time).total_seconds() / 60) for entry in entries)
+
+    def _get_equipment_load(self, db, equipment_id: int):
+        entries = self.schedule_repo.get_by_equipment(db, equipment_id)
+        return sum(int((entry.end_time - entry.start_time).total_seconds() / 60) for entry in entries)
 
     def _create_schedule_entry(self, db, order_id: int, recipe_operation_id: int, start_time: datetime,
                                end_time: datetime, equipment_id: Optional[int], confectioner_id: int):

@@ -1,7 +1,10 @@
 from datetime import datetime
 from fastapi import HTTPException
+from decimal import Decimal
 from app.services.base_service import BaseService
 from app.services.planning_service import PlanningService
+from app.entities.inventory.repository import InventoryRepository
+from app.entities.recipe_ingredient.repository import RecipeIngredientRepository
 from .repository import OrderRepository
 from .validator import OrderValidator
 # from app.services.schedule_service import generate_schedule
@@ -38,13 +41,41 @@ class OrderService(BaseService):
         # Создание
         order = self.repo.safe_create(db, new_order)
 
+        # Резервируем продукты на складе
+        inventory_repo = InventoryRepository()
+        recipe_ingredient_repo = RecipeIngredientRepository()
+        recipe_ingredients = recipe_ingredient_repo.get_by_recipe_id(db, order.recipe_id)
+        reserved = []
+
+        for ing in recipe_ingredients:
+            inventory = inventory_repo.get_by_ingredient_id(db, ing.ingredient_id)
+            if not inventory:
+                raise HTTPException(status_code=400, detail=f"Ингредиент id={ing.ingredient_id} не найден на складе")
+
+            required_amount = Decimal(ing.quantity_per_unit) * Decimal(order.quantity)
+            if inventory.current_quantity < required_amount:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Недостаточно ингредиента id={ing.ingredient_id}. Нужно {required_amount}, в наличии {inventory.current_quantity}"
+                )
+
+            inventory.current_quantity -= required_amount
+            db.add(inventory)
+            reserved.append((inventory, required_amount))
+
+        db.commit()
+
         # Генерация расписания
         try:
             PlanningService().plan_order(db, order.order_id)
         except HTTPException as exc:
-            # Если планирование не удалось, удаляем расчёт расписания и заказ
-            from app.entities.schedule.repository import ScheduleEntryRepository
+            # Если планирование не удалось, восстановим зарезервированные продукты, удалим расчёт расписания и заказ
+            for inventory, amount in reserved:
+                inventory.current_quantity += amount
+                db.add(inventory)
+            db.commit()
 
+            from app.entities.schedule.repository import ScheduleEntryRepository
             schedule_repo = ScheduleEntryRepository()
             schedule_repo.delete_by_order_id(db, order.order_id)
             db.delete(order)
@@ -52,9 +83,12 @@ class OrderService(BaseService):
             detail = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
             raise HTTPException(status_code=400, detail=f"Не удалось спланировать заказ: {detail}")
         except Exception as e:
-            # Если планирование не удалось, удаляем расчёт расписания и заказ
-            from app.entities.schedule.repository import ScheduleEntryRepository
+            for inventory, amount in reserved:
+                inventory.current_quantity += amount
+                db.add(inventory)
+            db.commit()
 
+            from app.entities.schedule.repository import ScheduleEntryRepository
             schedule_repo = ScheduleEntryRepository()
             schedule_repo.delete_by_order_id(db, order.order_id)
             db.delete(order)

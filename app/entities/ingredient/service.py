@@ -50,8 +50,8 @@ class IngredientService(BaseService):
         inventory_data = {}
         if 'current_quantity' in data_dict:
             inventory_data['current_quantity'] = data_dict.pop('current_quantity')
-        if 'min_quantity' in data_dict:
-            inventory_data['min_stock'] = data_dict.pop('min_quantity')
+        if 'min_stock' in data_dict:
+            inventory_data['min_stock'] = data_dict.pop('min_stock')
 
         self.validate(data_dict, is_update=True)
         ingredient = self.repo.update(db, entity_id, data_dict)

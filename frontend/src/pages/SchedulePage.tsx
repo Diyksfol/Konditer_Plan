@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useSchedule } from '../hooks/useSchedule';
 import { useEquipments } from '../hooks/useEquipments';
 import { useConfectioners } from '../hooks/useConfectioners';
@@ -25,18 +25,17 @@ const SchedulePage: React.FC = () => {
   const [editingEquipment, setEditingEquipment] = useState<Equipment | null>(null);
   const [viewMode, setViewMode] = useState<'equipment' | 'confectioner'>('equipment');
   const [zoomLevel, setZoomLevel] = useState(1);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const DAY_START_HOUR = 9;
   const DAY_END_HOUR = 18;
   const DAY_DURATION_MINUTES = (DAY_END_HOUR - DAY_START_HOUR) * 60;
-  const timelineLabels = Array.from({ length: (DAY_END_HOUR - DAY_START_HOUR) * 12 + 1 }, (_, i) => {
-    const hour = DAY_START_HOUR + Math.floor(i / 12);
-    const minute = (i % 12) * 5;
-    return `${hour}:${minute.toString().padStart(2, '0')}`;
-  });
-  const filteredLabels = zoomLevel < 1 ? timelineLabels.filter((_, i) => i % 6 === 0) : timelineLabels;
-  const timelineGridWidth = filteredLabels.length * 20 * zoomLevel;
-  const timelineContainerMinWidth = 220 + timelineGridWidth;
+  const intervalMinutes = 5; // Always 5 minutes for grid
+  const labelIntervalMinutes = 15; // Labels only every 15 minutes
+  const totalColumns = (DAY_END_HOUR - DAY_START_HOUR) * 60 / intervalMinutes; // Always 108 for 5-min intervals
+  const baseCellWidth = 9;
+  const timelineGridWidth = totalColumns * baseCellWidth * zoomLevel;
+  const timelineContainerMinWidth = 110 + timelineGridWidth;
 
   const getMinutesFromMidnight = (date: Date) => date.getHours() * 60 + date.getMinutes();
 
@@ -44,13 +43,9 @@ const SchedulePage: React.FC = () => {
     const start = new Date(entry.start_time);
     const end = new Date(entry.end_time);
     const minutesFromStart = getMinutesFromMidnight(start) - DAY_START_HOUR * 60;
-    const startIndex = zoomLevel < 1 
-      ? Math.round(minutesFromStart / 30) + 1 
-      : Math.round(minutesFromStart / 5) + 1;
+    const startIndex = Math.round(minutesFromStart / intervalMinutes) + 1;
     const durationMinutes = Math.max(5, getMinutesFromMidnight(end) - getMinutesFromMidnight(start));
-    const span = zoomLevel < 1 
-      ? Math.max(1, Math.round(durationMinutes / 30)) 
-      : Math.max(1, Math.round(durationMinutes / 5));
+    const span = Math.max(1, Math.round(durationMinutes / intervalMinutes));
     return {
       gridColumn: `${startIndex} / span ${span}`,
     };
@@ -90,11 +85,13 @@ const SchedulePage: React.FC = () => {
       ? entry.confectioner_id ? getConfectionerName(entry.confectioner_id) : ''
       : entry.equipment_id ? getEquipmentName(entry.equipment_id) : '';
 
+    const productQuantity = operation ? Number(operation.product_quantity) * quantity : 0;
+
     return {
       title: getOrderRecipeNameAndQuantity(entry.order_id),
       resource,
       detail: operation
-        ? `${operation.operation_name} ${operation.product_quantity * quantity} ${operation.unit || 'шт'}`
+        ? `${operation.operation_name} ${productQuantity.toFixed(2)} ${operation.unit || 'шт'}`
         : `Операция ${entry.recipe_operation_id}`,
     };
   };
@@ -129,6 +126,26 @@ const SchedulePage: React.FC = () => {
   const getConfectionerName = (confectionerId: number) => {
     const confectioner = confectioners.find((c: Confectioner) => c.confectioner_id === confectionerId);
     return confectioner ? confectioner.name : `Кондитер ${confectionerId}`;
+  };
+
+  const getBlockStatusClass = (entry: ScheduleEntry) => {
+    if (!entry.status) return '';
+    return entry.status.replace('_', '-');
+  };
+
+  const getBlockStatusLabel = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'Завершено';
+      case 'in_progress':
+        return 'В работе';
+      case 'planned':
+        return 'Запланировано';
+      case 'cancelled':
+        return 'Отменено';
+      default:
+        return status;
+    }
   };
 
   const handleRunPlanning = async () => {
@@ -219,7 +236,6 @@ const SchedulePage: React.FC = () => {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>Расписание</h1>
-        <h2>Кондитер.план</h2>
       </div>
       <div>
         <label>Дата: </label>
@@ -259,14 +275,23 @@ const SchedulePage: React.FC = () => {
         </div>
       </div>
 
-      <div className="schedule-timeline">
+      <div className="schedule-timeline" ref={containerRef}>
         <div className="timeline-container" style={{ minWidth: `${timelineContainerMinWidth}px` }}>
           <div className="timeline-header">
             <div className="timeline-row-label">{viewMode === 'equipment' ? 'Оборудование' : 'Кондитер'}</div>
-            <div className="timeline-header-track" style={{ gridTemplateColumns: `repeat(${filteredLabels.length}, ${20 * zoomLevel}px)` }}>
-              {timelineLabels.map(label => (
-                <div key={label} className="timeline-time-label">{label}</div>
-              ))}
+            <div className="timeline-header-track" style={{ gridTemplateColumns: `repeat(${totalColumns}, ${baseCellWidth * zoomLevel}px)`, background: `repeating-linear-gradient(to right, transparent 0, transparent ${baseCellWidth * zoomLevel * 3 - 1}px, rgba(0, 0, 0, 0.1) ${baseCellWidth * zoomLevel * 3 - 1}px, rgba(0, 0, 0, 0.1) ${baseCellWidth * zoomLevel * 3}px)` }}>
+              {Array.from({ length: totalColumns }, (_, i) => {
+                const minutes = i * intervalMinutes;
+                const hour = DAY_START_HOUR + Math.floor(minutes / 60);
+                const minute = minutes % 60;
+                const label = `${hour}:${minute.toString().padStart(2, '0')}`;
+                const showLabel = minute % labelIntervalMinutes === 0;
+                return (
+                  <div key={i} className="timeline-time-label" style={{ visibility: showLabel ? 'visible' : 'hidden', gridColumn: i + 1 }}>
+                    {showLabel ? label : ''}
+                  </div>
+                );
+              })}
             </div>
           </div>
           <div className="timeline-rows">
@@ -282,14 +307,18 @@ const SchedulePage: React.FC = () => {
               return (
                 <div key={rowId} className="timeline-row">
                   <div className="timeline-row-label">{rowLabel}</div>
-                  <div className="timeline-row-track" style={{ gridTemplateColumns: `repeat(${filteredLabels.length}, ${20 * zoomLevel}px)` }}>
+                  <div className="timeline-row-track" style={{ 
+                    gridTemplateColumns: `repeat(${totalColumns}, ${baseCellWidth * zoomLevel}px)`,
+                    background: `repeating-linear-gradient(to right, transparent 0, transparent ${baseCellWidth * zoomLevel * 3 - 1}px, rgba(0, 0, 0, 0.1) ${baseCellWidth * zoomLevel * 3 - 1}px, rgba(0, 0, 0, 0.1) ${baseCellWidth * zoomLevel * 3}px)`
+                  }}>
                     {rowEntries.map((entry: ScheduleEntry) => {
                       const blockInfo = getBlockInfo(entry);
                       return (
-                        <div key={entry.schedule_entry_id} className="timeline-block" style={getBlockGridPosition(entry)}>
+                        <div key={entry.schedule_entry_id} className={`timeline-block ${getBlockStatusClass(entry)}`} style={getBlockGridPosition(entry)}>
                           <div className="block-title">{blockInfo.title}</div>
                           {blockInfo.resource && <div className="block-subtitle">{blockInfo.resource}</div>}
                           <div className="block-detail">{blockInfo.detail}</div>
+                          <div className="block-status">{getBlockStatusLabel(entry.status || 'planned')}</div>
                         </div>
                       );
                     })}

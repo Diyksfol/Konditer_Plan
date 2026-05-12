@@ -193,7 +193,6 @@ const RecipesPage: React.FC = () => {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>Рецептуры</h1>
-        <h2>Кондитер.план</h2>
       </div>
       <button onClick={openCreateModal}>Добавить рецепт</button>
       <div className="recipes-list">

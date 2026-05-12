@@ -35,12 +35,19 @@ const InventoryPage: React.FC = () => {
     if (!editingIngredient) return;
     try {
       const inventory = getInventoryForIngredient(editingIngredient.ingredient_id);
-      if (inventory && 'current_quantity' in data) {
-        // Update inventory if it exists and current_quantity is being changed
-        await api.updateInventory(inventory.inventory_id, { current_quantity: data.current_quantity });
-      } else {
-        // Otherwise update ingredient
-        await api.updateIngredient(editingIngredient.ingredient_id, data);
+      if (inventory && ('current_quantity' in data || 'min_stock' in data)) {
+        // Update inventory if it exists and inventory data is being changed
+        const inventoryUpdate: any = {};
+        if ('current_quantity' in data) inventoryUpdate.current_quantity = data.current_quantity;
+        if ('min_stock' in data) inventoryUpdate.min_stock = data.min_stock;
+        await api.updateInventory(inventory.inventory_id, inventoryUpdate);
+      }
+      // Update ingredient fields if present
+      const ingredientUpdate: any = {};
+      if ('ingredient_name' in data) ingredientUpdate.ingredient_name = data.ingredient_name;
+      if ('unit' in data) ingredientUpdate.unit = data.unit;
+      if (Object.keys(ingredientUpdate).length > 0) {
+        await api.updateIngredient(editingIngredient.ingredient_id, ingredientUpdate);
       }
       refetchIngredients();
       refetchInventories();
@@ -98,7 +105,6 @@ const InventoryPage: React.FC = () => {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>Склад</h1>
-        <h2>Кондитер.план</h2>
       </div>
       <button onClick={openCreateModal}>Добавить ингредиент</button>
       <button onClick={handleCheckAll}>Проверить всё</button>

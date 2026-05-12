@@ -57,7 +57,8 @@ class ScheduleEntryRepository(BaseRepository):
         if entry:
             entry.status = status
             db.commit()
-        return len(entries)
+            return 1
+        return 0
 
     # проверка существования
     def exists(self, db: Session, schedule_entry_id: int):
