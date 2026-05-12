@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import api from '../services/api';
+import api, { getErrorMessage } from '../services/api';
 import { ScheduleEntry } from '../types';
 
 export const useSchedule = () => {
@@ -12,7 +12,7 @@ export const useSchedule = () => {
       const data = await api.getSchedule();
       setSchedule(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

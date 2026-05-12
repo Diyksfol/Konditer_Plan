@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import api from '../services/api';
+import api, { getErrorMessage } from '../services/api';
 import { RecipeIngredient } from '../types';
 
 export const useRecipeIngredients = () => {
@@ -12,7 +12,7 @@ export const useRecipeIngredients = () => {
       const data = await api.getRecipeIngredients();
       setRecipeIngredients(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

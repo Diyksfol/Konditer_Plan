@@ -51,9 +51,9 @@ const RecipeIngredientForm: React.FC<RecipeIngredientFormProps> = ({ isOpen, onC
             onChange={(e) => setFormData({ ...formData, ingredient_id: e.target.value })}
           >
             <option value="">Выберите ингредиент</option>
-            {ingredients.map((ing: any) => (
+            {[...ingredients].sort((a: any, b: any) => a.ingredient_id - b.ingredient_id).map((ing: any) => (
               <option key={ing.ingredient_id} value={ing.ingredient_id}>
-                {ing.ingredient_id} - {ing.name} ({ing.unit})
+                {ing.ingredient_id} - {ing.ingredient_name} ({ing.unit})
               </option>
             ))}
           </select>

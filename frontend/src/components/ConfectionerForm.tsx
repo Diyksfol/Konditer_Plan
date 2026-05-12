@@ -64,7 +64,7 @@ const ConfectionerForm: React.FC<ConfectionerFormProps> = ({ isOpen, onClose, on
             onChange={(e) => setFormData({ ...formData, qualification_id: e.target.value })}
           >
             <option value="">Выберите квалификацию</option>
-            {qualifications.map((qual: any) => (
+            {[...qualifications].sort((a: any, b: any) => a.qualification_id - b.qualification_id).map((qual: any) => (
               <option key={qual.qualification_id} value={qual.qualification_id}>
                 {qual.qualification_id} - {qual.name}
               </option>

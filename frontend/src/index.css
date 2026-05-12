@@ -138,9 +138,22 @@ button:nth-child(3):hover {
 .close-button {
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: 2rem;
   cursor: pointer;
-  color: #6c757d;
+  color: #333;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.close-button:hover {
+  background-color: #f0f0f0;
+  color: #000;
 }
 
 .modal-body {
@@ -191,6 +204,100 @@ button:nth-child(3):hover {
   margin-bottom: 0.25rem;
   border-radius: 0.25rem;
   font-size: 0.875rem;
+}
+
+.schedule-timeline {
+  margin: 1rem 0;
+  overflow-x: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  background: #fff;
+}
+
+.timeline-container {
+  min-width: 1000px;
+}
+
+.timeline-header {
+  display: flex;
+  position: sticky;
+  top: 0;
+  background: #f8f9fa;
+  z-index: 2;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.timeline-row-label,
+.timeline-time-label {
+  min-width: 20px;
+  padding: 0.5rem 0.5rem;
+  text-align: center;
+  font-weight: 600;
+  border-right: 1px solid #dee2e6;
+  font-size: 0.85rem;
+}
+
+.timeline-row-label {
+  min-width: 220px;
+  text-align: left;
+  background: #f1f3f5;
+}
+
+.timeline-time-label:last-child,
+.timeline-row-label:last-child {
+  border-right: none;
+}
+
+.timeline-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-row {
+  display: flex;
+  align-items: stretch;
+  min-height: 5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.timeline-row-track,
+.timeline-header-track {
+  display: grid;
+  grid-auto-rows: minmax(4rem, auto);
+  align-items: stretch;
+  width: 100%;
+}
+
+.timeline-row-track {
+  min-height: 5rem;
+  background: #fff;
+}
+
+.timeline-block {
+  position: relative;
+  min-height: 3rem;
+  background-color: #e9ecef;
+  border: 1px solid #ced4da;
+  border-radius: 0.4rem;
+  padding: 0.4rem 0.5rem;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  white-space: normal;
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.block-title {
+  font-weight: 700;
+}
+
+.block-subtitle,
+.block-detail {
+  font-size: 0.8rem;
+  line-height: 1.1;
+  opacity: 0.85;
 }
 
 /* Sections */

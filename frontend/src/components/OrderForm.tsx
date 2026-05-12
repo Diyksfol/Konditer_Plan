@@ -59,7 +59,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, onClose, onSubmit, initia
             onChange={(e) => setFormData({ ...formData, recipe_id: e.target.value })}
           >
             <option value="">Выберите рецепт</option>
-            {recipes.map((recipe: any) => (
+            {[...recipes].sort((a: any, b: any) => a.recipe_id - b.recipe_id).map((recipe: any) => (
               <option key={recipe.recipe_id} value={recipe.recipe_id}>
                 {recipe.recipe_id} - {recipe.name}
               </option>

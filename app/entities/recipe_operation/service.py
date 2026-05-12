@@ -17,6 +17,12 @@ class RecipeOperationService(BaseService):
             data_dict = data
 
         self.validator.validate(data_dict)
+
+        # Автоматически присвоить следующий sequence_number
+        recipe_id = data_dict['recipe_id']
+        max_seq = self.repo.get_max_sequence_number(db, recipe_id)
+        data_dict['sequence_number'] = max_seq + 1
+
         return self.repo.safe_create(db, data_dict)
 
     def update(self, db, entity_id, data):

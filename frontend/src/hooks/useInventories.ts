@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import api from '../services/api';
+import api, { getErrorMessage } from '../services/api';
 import { Inventory } from '../types';
 
 export const useInventories = () => {
@@ -12,7 +12,7 @@ export const useInventories = () => {
       const data = await api.getInventories();
       setInventories(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

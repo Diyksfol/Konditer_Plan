@@ -39,7 +39,27 @@ class OrderService(BaseService):
         order = self.repo.safe_create(db, new_order)
 
         # Генерация расписания
-        PlanningService().plan_order(db, order.order_id)
+        try:
+            PlanningService().plan_order(db, order.order_id)
+        except HTTPException as exc:
+            # Если планирование не удалось, удаляем расчёт расписания и заказ
+            from app.entities.schedule.repository import ScheduleEntryRepository
+
+            schedule_repo = ScheduleEntryRepository()
+            schedule_repo.delete_by_order_id(db, order.order_id)
+            db.delete(order)
+            db.commit()
+            detail = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
+            raise HTTPException(status_code=400, detail=f"Не удалось спланировать заказ: {detail}")
+        except Exception as e:
+            # Если планирование не удалось, удаляем расчёт расписания и заказ
+            from app.entities.schedule.repository import ScheduleEntryRepository
+
+            schedule_repo = ScheduleEntryRepository()
+            schedule_repo.delete_by_order_id(db, order.order_id)
+            db.delete(order)
+            db.commit()
+            raise HTTPException(status_code=400, detail=f"Не удалось спланировать заказ: {str(e)}")
 
         return order
 
@@ -60,14 +80,14 @@ class OrderService(BaseService):
     def get_by_status(self, db, status: str):
         return self.repo.get_by_status(db, status)
 
-    def delete(self, db, order_id: int):
+    def delete(self, db, entity_id: int):
         """Delete order and all associated schedule entries"""
         # Import here to avoid circular imports
         from app.entities.schedule.repository import ScheduleEntryRepository
         
         # Delete all schedule entries for this order
         schedule_repo = ScheduleEntryRepository()
-        schedule_repo.delete_by_order_id(db, order_id)
+        schedule_repo.delete_by_order_id(db, entity_id)
         
         # Delete the order
-        return super().delete(db, order_id)
+        return super().delete(db, entity_id)

@@ -4,8 +4,8 @@ from fastapi import HTTPException
 class EquipmentValidator:
     def validate(self, data: dict, is_update: bool = False):
         """Валидация оборудования"""
-        if not is_update or 'name' in data:
-            name = data.get('name', '')
+        if not is_update or 'equipment_name' in data:
+            name = data.get('equipment_name', '')
             if not name or not name.strip():
                 raise HTTPException(400, "Название оборудования обязательно")
 

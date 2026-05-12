@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useOrders } from '../hooks/useOrders';
 import { useRecipes } from '../hooks/useRecipes';
-import api from '../services/api';
+import api, { getErrorMessage } from '../services/api';
 import OrderForm from '../components/OrderForm';
 import { confirmDelete, formatDate } from '../utils/helpers';
 import { Order, Recipe } from '../types';
@@ -22,7 +22,7 @@ const OrdersPage: React.FC = () => {
       await api.createOrder(data);
       refetch();
     } catch (err) {
-      alert('Ошибка при создании заказа');
+      alert(`Ошибка при создании заказа: ${getErrorMessage(err)}`);
     }
   };
 
@@ -33,7 +33,7 @@ const OrdersPage: React.FC = () => {
       refetch();
       setEditingOrder(null);
     } catch (err) {
-      alert('Ошибка при обновлении заказа');
+      alert(`Ошибка при обновлении заказа: ${getErrorMessage(err)}`);
     }
   };
 
@@ -43,7 +43,19 @@ const OrdersPage: React.FC = () => {
       await api.deleteOrder(id);
       refetch();
     } catch (err) {
-      alert('Ошибка при удалении заказа');
+      alert(`Ошибка при удалении заказа: ${getErrorMessage(err)}`);
+    }
+  };
+
+  const handleDeleteCompleted = async () => {
+    if (!confirmDelete('Вы уверены, что хотите удалить все завершённые заказы?')) return;
+    try {
+      const completedOrders = orders.filter((order: Order) => order.status === 'completed');
+      const promises = completedOrders.map((order: Order) => api.deleteOrder(order.order_id));
+      await Promise.all(promises);
+      refetch();
+    } catch (err) {
+      alert(`Ошибка при удалении завершённых заказов: ${getErrorMessage(err)}`);
     }
   };
 
@@ -72,6 +84,7 @@ const OrdersPage: React.FC = () => {
         <h2>Кондитер.план</h2>
       </div>
       <button onClick={openCreateModal}>Добавить заказ</button>
+      <button onClick={handleDeleteCompleted}>Удалить завершённые</button>
       <table>
         <thead>
           <tr>
@@ -84,7 +97,7 @@ const OrdersPage: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {orders.map((order: Order) => (
+          {[...orders].sort((a: Order, b: Order) => a.order_id - b.order_id).map((order: Order) => (
             <tr key={order.order_id}>
               <td>{order.order_id}</td>
               <td>{getRecipeName(order.recipe_id)}</td>

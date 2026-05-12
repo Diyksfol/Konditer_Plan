@@ -4,12 +4,48 @@ import { Order, ScheduleEntry, Ingredient, Inventory, Recipe, RecipeOperation, R
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
+export const getErrorMessage = (err: unknown): string => {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'string') return err;
+
+  if (err && typeof err === 'object') {
+    const anyErr = err as any;
+    const responseData = anyErr?.response?.data;
+
+    if (typeof anyErr.detail === 'string') return anyErr.detail;
+    if (typeof anyErr.message === 'string') return anyErr.message;
+    if (typeof anyErr.error === 'string') return anyErr.error;
+    if (responseData) {
+      if (typeof responseData.detail === 'string') return responseData.detail;
+      if (typeof responseData.message === 'string') return responseData.message;
+    }
+  }
+
+  return 'Неизвестная ошибка';
+};
+
 class ApiService {
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     const response = await fetch(url, options);
     if (!response.ok) {
-      throw new Error(`API Error: ${response.statusText}`);
+      let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+      const text = await response.text();
+      if (text) {
+        try {
+          const body = JSON.parse(text);
+          if (body && typeof body === 'object') {
+            if (typeof body.detail === 'string') errorMessage = body.detail;
+            else if (typeof body.message === 'string') errorMessage = body.message;
+            else if (typeof body.error === 'string') errorMessage = body.error;
+          }
+        } catch {
+          if (text) {
+            errorMessage = text;
+          }
+        }
+      }
+      throw new Error(errorMessage);
     }
     return response.json();
   }
@@ -70,6 +106,12 @@ class ApiService {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ order_id: orderId }),
+    });
+  }
+
+  async updateOrderStatuses(): Promise<any> {
+    return this.request('/planning/update-statuses', {
+      method: 'POST',
     });
   }
 

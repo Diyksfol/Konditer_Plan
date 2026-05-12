@@ -27,3 +27,8 @@ class RecipeOperationRepository(BaseRepository):
         db.commit()
         db.refresh(recipe_operation)
         return recipe_operation
+
+    # получить максимальный sequence_number для recipe_id
+    def get_max_sequence_number(self, db: Session, recipe_id: int):
+        result = db.query(RecipeOperation.sequence_number).filter(RecipeOperation.recipe_id == recipe_id).order_by(RecipeOperation.sequence_number.desc()).first()
+        return result[0] if result else 0

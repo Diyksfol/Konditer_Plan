@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import api from '../services/api';
+import api, { getErrorMessage } from '../services/api';
 import { EquipmentType } from '../types';
 
 export const useEquipmentTypes = () => {
@@ -10,9 +10,9 @@ export const useEquipmentTypes = () => {
   const fetchEquipmentTypes = async () => {
     try {
       const data = await api.getEquipmentTypes();
-      setEquipmentTypes(data);
+      setEquipmentTypes(data.sort((a: EquipmentType, b: EquipmentType) => a.equipment_type_id - b.equipment_type_id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

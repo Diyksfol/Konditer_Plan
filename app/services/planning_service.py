@@ -75,6 +75,10 @@ class PlanningService:
             start_date = order.delivery_date
 
         current_start = datetime.combine(start_date, WORK_START)
+        # If start_date is today, start from current time or WORK_START, whichever is later
+        now = datetime.now()
+        if start_date == now.date():
+            current_start = max(current_start, now)
         schedule_entries = []
 
         for operation in operations:
@@ -96,7 +100,25 @@ class PlanningService:
                 operation.required_qualification_id
             )
             if not confectioner:
-                raise HTTPException(status_code=400, detail="Нет доступных кондитеров для операции")
+                # Try to find a later slot
+                found_slot = False
+                temp_start = start_time
+                while temp_start + duration <= datetime.combine(start_date, WORK_END):
+                    temp_end = temp_start + duration
+                    confectioner = self._find_available_confectioner(
+                        db,
+                        temp_start,
+                        temp_end,
+                        operation.required_qualification_id
+                    )
+                    if confectioner:
+                        start_time = temp_start
+                        end_time = temp_end
+                        found_slot = True
+                        break
+                    temp_start += timedelta(minutes=30)
+                if not found_slot:
+                    raise HTTPException(status_code=400, detail="Нет доступных кондитеров для операции")
 
             equipment_id = None
             if operation.equipment_type_id:
@@ -107,7 +129,25 @@ class PlanningService:
                     end_time
                 )
                 if not equipment:
-                    raise HTTPException(status_code=400, detail="Нет доступного оборудования для операции")
+                    # Try to find a later slot
+                    found_slot = False
+                    temp_start = start_time
+                    while temp_start + duration <= datetime.combine(start_date, WORK_END):
+                        temp_end = temp_start + duration
+                        equipment = self._find_available_equipment(
+                            db,
+                            operation.equipment_type_id,
+                            temp_start,
+                            temp_end
+                        )
+                        if equipment:
+                            start_time = temp_start
+                            end_time = temp_end
+                            found_slot = True
+                            break
+                        temp_start += timedelta(minutes=30)
+                    if not found_slot:
+                        raise HTTPException(status_code=400, detail="Нет доступного оборудования для операции")
                 equipment_id = equipment.equipment_id
 
             entry = self._create_schedule_entry(
@@ -140,6 +180,49 @@ class PlanningService:
             ]
         }
 
+    def update_order_statuses(self, db):
+        """Обновляет статусы заказов на основе текущего времени"""
+        from app.entities.order.repository import OrderRepository
+        from app.entities.schedule.repository import ScheduleEntryRepository
+
+        order_repo = OrderRepository()
+        schedule_repo = ScheduleEntryRepository()
+
+        now = datetime.now()
+
+        # Получить все заказы в статусе planned или in_progress
+        orders = order_repo.get_by_statuses(db, ["planned", "in_progress"])
+
+        for order in orders:
+            schedule_entries = schedule_repo.get_by_order_id(db, order.order_id)
+            if not schedule_entries:
+                continue
+
+            # Проверить статус операций
+            all_completed = True
+            any_started = False
+
+            for entry in schedule_entries:
+                if entry.end_time <= now:
+                    # Завершена
+                    if entry.status != "completed":
+                        schedule_repo.update_status(db, entry.schedule_entry_id, "completed")
+                elif entry.start_time <= now < entry.end_time:
+                    # В процессе
+                    if entry.status != "in_progress":
+                        schedule_repo.update_status(db, entry.schedule_entry_id, "in_progress")
+                    any_started = True
+                    all_completed = False
+                else:
+                    # Не начата
+                    all_completed = False
+
+            # Обновить статус заказа
+            if all_completed:
+                order_repo.update_status(db, order.order_id, "completed")
+            elif any_started:
+                order_repo.update_status(db, order.order_id, "in_progress")
+
     def _fit_into_workday(self, start_time: datetime, current_end: datetime, duration: timedelta) -> datetime:
         """
         Если start_time выходит за начало рабочего дня,
@@ -167,7 +250,7 @@ class PlanningService:
     def _find_available_confectioner(self, db, start_time: datetime, end_time: datetime, qualification_id: Optional[int]):
         confectioners = self.confectioner_repo.get_active(db)
         for confectioner in confectioners:
-            if qualification_id and confectioner.qualification_id != qualification_id:
+            if qualification_id and confectioner.qualification_id < qualification_id:
                 continue
             if not self.schedule_repo.get_by_confectioner_and_time(
                     db, confectioner.confectioner_id, start_time, end_time):

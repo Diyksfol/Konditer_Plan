@@ -1,7 +1,7 @@
 // Хуки для данных
 
 import { useState, useEffect } from 'react';
-import api from '../services/api';
+import api, { getErrorMessage } from '../services/api';
 import { Order } from '../types';
 
 export const useOrders = () => {
@@ -14,7 +14,7 @@ export const useOrders = () => {
       const data = await api.getOrders();
       setOrders(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

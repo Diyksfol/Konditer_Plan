@@ -64,7 +64,7 @@ const EquipmentForm: React.FC<EquipmentFormProps> = ({ isOpen, onClose, onSubmit
             onChange={(e) => setFormData({ ...formData, equipment_type_id: e.target.value })}
           >
             <option value="">Выберите тип оборудования</option>
-            {equipmentTypes.map((type: any) => (
+            {[...equipmentTypes].sort((a: any, b: any) => a.equipment_type_id - b.equipment_type_id).map((type: any) => (
               <option key={type.equipment_type_id} value={type.equipment_type_id}>
                 {type.equipment_type_id} - {type.equipment_name}
               </option>

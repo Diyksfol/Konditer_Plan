@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import api from '../services/api';
+import api, { getErrorMessage } from '../services/api';
 import { RecipeOperation } from '../types';
 
 export const useRecipeOperations = () => {
@@ -12,7 +12,7 @@ export const useRecipeOperations = () => {
       const data = await api.getRecipeOperations();
       setRecipeOperations(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }

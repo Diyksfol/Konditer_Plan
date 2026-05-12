@@ -12,6 +12,8 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, onClose, onSubm
   const [formData, setFormData] = useState({
     ingredient_name: initialData?.ingredient_name || '',
     unit: initialData?.unit || '',
+    current_quantity: initialData?.current_quantity !== undefined ? initialData.current_quantity : '',
+    min_stock: initialData?.min_stock !== undefined ? initialData.min_stock : '',
   });
 
   useEffect(() => {
@@ -19,11 +21,15 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, onClose, onSubm
       setFormData({
         ingredient_name: initialData.ingredient_name || '',
         unit: initialData.unit || '',
+        current_quantity: initialData.current_quantity !== undefined ? initialData.current_quantity : '',
+        min_stock: initialData.min_stock !== undefined ? initialData.min_stock : '',
       });
     } else {
       setFormData({
         ingredient_name: '',
         unit: '',
+        current_quantity: '',
+        min_stock: '',
       });
     }
   }, [initialData, isOpen]);
@@ -34,6 +40,8 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, onClose, onSubm
     const dataToSubmit: any = {};
     if (formData.ingredient_name.trim()) dataToSubmit.ingredient_name = formData.ingredient_name.trim();
     if (formData.unit.trim()) dataToSubmit.unit = formData.unit.trim();
+    if (formData.current_quantity !== '') dataToSubmit.current_quantity = parseFloat(formData.current_quantity as string);
+    if (formData.min_stock !== '') dataToSubmit.min_stock = parseFloat(formData.min_stock as string);
 
     onSubmit(dataToSubmit);
     onClose();
@@ -65,6 +73,28 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, onClose, onSubm
             <option value="шт">шт (штуки)</option>
             <option value="дозы">дозы</option>
           </select>
+        </div>
+        <div className="form-group">
+          <label>Текущее количество:</label>
+          <input
+            type="number"
+            value={formData.current_quantity}
+            onChange={(e) => setFormData({ ...formData, current_quantity: e.target.value })}
+            min="0"
+            step="0.01"
+            placeholder="Оставьте пустым, чтобы не менять"
+          />
+        </div>
+        <div className="form-group">
+          <label>Минимальный запас:</label>
+          <input
+            type="number"
+            value={formData.min_stock}
+            onChange={(e) => setFormData({ ...formData, min_stock: e.target.value })}
+            min="0"
+            step="0.01"
+            placeholder="Оставьте пустым, чтобы не менять"
+          />
         </div>
         <div className="form-actions">
           <button type="submit">{initialData ? 'Обновить' : 'Создать'}</button>

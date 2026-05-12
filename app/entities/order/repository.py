@@ -24,6 +24,10 @@ class OrderRepository(BaseRepository):
         db.refresh(order)
         return order
 
+    # чтение по списку статусов
+    def get_by_statuses(self, db: Session, statuses: list[str]):
+        return db.query(Order).filter(Order.status.in_(statuses)).all()
+
     # обновление статуса
     def update_status(self, db: Session, order_id: int, status: str):
         order = db.query(Order).filter(Order.order_id == order_id).first()

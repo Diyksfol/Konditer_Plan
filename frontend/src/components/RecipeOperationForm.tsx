@@ -102,7 +102,7 @@ const RecipeOperationForm: React.FC<RecipeOperationFormProps> = ({ isOpen, onClo
             <option value="">Не требуется</option>
             {equipmentTypes.map((type: any) => (
               <option key={type.equipment_type_id} value={type.equipment_type_id}>
-                {type.type_name}
+                {type.equipment_type_id} - {type.equipment_name}
               </option>
             ))}
           </select>

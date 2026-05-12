@@ -50,6 +50,13 @@ class ScheduleEntryRepository(BaseRepository):
         for entry in entries:
             db.delete(entry)
         db.commit()
+
+    # обновление статуса записи
+    def update_status(self, db: Session, schedule_entry_id: int, status: str):
+        entry = self.get_by_id(db, schedule_entry_id)
+        if entry:
+            entry.status = status
+            db.commit()
         return len(entries)
 
     # проверка существования

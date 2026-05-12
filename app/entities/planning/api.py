@@ -14,12 +14,9 @@ class PlanningRequest(BaseModel):
     order_id: Optional[int] = None
 
 
-@router.post("/run")
-def run_planning(request: PlanningRequest, db: Session = Depends(get_db)):
-    """Запуск алгоритма планирования.
-
-    Если order_id передан в теле запроса, планирование выполняется только для одного заказа.
-    Если order_id отсутствует, запускается планирование для всех заказов со статусом "planned".
-    """
+@router.post("/update-statuses")
+def update_order_statuses(db: Session = Depends(get_db)):
+    """Обновляет статусы заказов и операций на основе текущего времени."""
     service = PlanningService()
-    return service.run(db, request.order_id)
+    service.update_order_statuses(db)
+    return {"message": "Statuses updated successfully"}

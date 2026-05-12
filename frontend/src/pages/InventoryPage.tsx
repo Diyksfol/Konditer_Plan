@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useIngredients } from '../hooks/useIngredients';
 import { useInventories } from '../hooks/useInventories';
-import api from '../services/api';
+import api, { getErrorMessage } from '../services/api';
 import IngredientForm from '../components/IngredientForm';
 import { confirmDelete, formatDate } from '../utils/helpers';
 import { Ingredient, Inventory } from '../types';
@@ -25,8 +25,9 @@ const InventoryPage: React.FC = () => {
     try {
       await api.createIngredient(data);
       refetchIngredients();
+      refetchInventories();
     } catch (err) {
-      alert('Ошибка при создании ингредиента');
+      alert(`Ошибка при создании ингредиента: ${getErrorMessage(err)}`);
     }
   };
 
@@ -45,7 +46,7 @@ const InventoryPage: React.FC = () => {
       refetchInventories();
       setEditingIngredient(null);
     } catch (err) {
-      alert('Ошибка при обновлении ингредиента');
+      alert(`Ошибка при обновлении ингредиента: ${getErrorMessage(err)}`);
     }
   };
 
@@ -55,7 +56,7 @@ const InventoryPage: React.FC = () => {
       await api.deleteIngredient(id);
       refetchIngredients();
     } catch (err) {
-      alert('Ошибка при удалении ингредиента');
+      alert(`Ошибка при удалении ингредиента: ${getErrorMessage(err)}`);
     }
   };
 
@@ -64,7 +65,17 @@ const InventoryPage: React.FC = () => {
       await api.updateInventoryCheckDate(inventoryId);
       refetchInventories();
     } catch (err) {
-      alert('Ошибка при обновлении даты проверки');
+      alert(`Ошибка при обновлении даты проверки: ${getErrorMessage(err)}`);
+    }
+  };
+
+  const handleCheckAll = async () => {
+    try {
+      const promises = inventories.map((inv: Inventory) => api.updateInventoryCheckDate(inv.inventory_id));
+      await Promise.all(promises);
+      refetchInventories();
+    } catch (err) {
+      alert(`Ошибка при проверке: ${getErrorMessage(err)}`);
     }
   };
 
@@ -90,6 +101,7 @@ const InventoryPage: React.FC = () => {
         <h2>Кондитер.план</h2>
       </div>
       <button onClick={openCreateModal}>Добавить ингредиент</button>
+      <button onClick={handleCheckAll}>Проверить всё</button>
       <table>
         <thead>
           <tr>
@@ -103,7 +115,7 @@ const InventoryPage: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {ingredients.map((ingredient: Ingredient) => {
+          {[...ingredients].sort((a: Ingredient, b: Ingredient) => a.ingredient_id - b.ingredient_id).map((ingredient: Ingredient) => {
             const inventory = getInventoryForIngredient(ingredient.ingredient_id);
             const lowStock = isLowStock(ingredient);
             return (

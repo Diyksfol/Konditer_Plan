@@ -3,7 +3,7 @@ import { useRecipes } from '../hooks/useRecipes';
 import { useRecipeOperations } from '../hooks/useRecipeOperations';
 import { useRecipeIngredients } from '../hooks/useRecipeIngredients';
 import { useIngredients } from '../hooks/useIngredients';
-import api from '../services/api';
+import api, { getErrorMessage } from '../services/api';
 import RecipeForm from '../components/RecipeForm';
 import RecipeOperationForm from '../components/RecipeOperationForm';
 import RecipeIngredientForm from '../components/RecipeIngredientForm';
@@ -36,7 +36,7 @@ const RecipesPage: React.FC = () => {
         setExpandedRecipe(newRecipe.recipe_id); // Развернуть рецепт
       }, 100);
     } catch (err) {
-      alert('Ошибка при создании рецепта');
+      alert(`Ошибка при создании рецепта: ${getErrorMessage(err)}`);
     }
   };
 
@@ -47,7 +47,7 @@ const RecipesPage: React.FC = () => {
       refetchRecipes();
       setEditingRecipe(null);
     } catch (err) {
-      alert('Ошибка при обновлении рецепта');
+      alert(`Ошибка при обновлении рецепта: ${getErrorMessage(err)}`);
     }
   };
 
@@ -57,7 +57,7 @@ const RecipesPage: React.FC = () => {
       await api.deleteRecipe(id);
       refetchRecipes();
     } catch (err) {
-      alert('Ошибка при удалении рецепта');
+      alert(`Ошибка при удалении рецепта: ${getErrorMessage(err)}`);
     }
   };
 
@@ -67,7 +67,7 @@ const RecipesPage: React.FC = () => {
       await api.createRecipeOperation({ ...data, recipe_id: currentRecipeId });
       refetchOperations();
     } catch (err) {
-      alert('Ошибка при создании операции');
+      alert(`Ошибка при создании операции: ${getErrorMessage(err)}`);
     }
   };
 
@@ -78,7 +78,7 @@ const RecipesPage: React.FC = () => {
       refetchOperations();
       setEditingOperation(null);
     } catch (err) {
-      alert('Ошибка при обновлении операции');
+      alert(`Ошибка при обновлении операции: ${getErrorMessage(err)}`);
     }
   };
 
@@ -88,7 +88,7 @@ const RecipesPage: React.FC = () => {
       await api.deleteRecipeOperation(id);
       refetchOperations();
     } catch (err) {
-      alert('Ошибка при удалении операции');
+      alert(`Ошибка при удалении операции: ${getErrorMessage(err)}`);
     }
   };
 
@@ -98,7 +98,7 @@ const RecipesPage: React.FC = () => {
       await api.createRecipeIngredient({ ...data, recipe_id: currentRecipeId });
       refetchIngredients();
     } catch (err) {
-      alert('Ошибка при добавлении ингредиента');
+      alert(`Ошибка при добавлении ингредиента: ${getErrorMessage(err)}`);
     }
   };
 
@@ -109,7 +109,7 @@ const RecipesPage: React.FC = () => {
       refetchIngredients();
       setEditingIngredient(null);
     } catch (err) {
-      alert('Ошибка при обновлении ингредиента');
+      alert(`Ошибка при обновлении ингредиента: ${getErrorMessage(err)}`);
     }
   };
 
@@ -119,7 +119,7 @@ const RecipesPage: React.FC = () => {
       await api.deleteRecipeIngredient(id);
       refetchIngredients();
     } catch (err) {
-      alert('Ошибка при удалении ингредиента');
+      alert(`Ошибка при удалении ингредиента: ${getErrorMessage(err)}`);
     }
   };
 
@@ -197,7 +197,7 @@ const RecipesPage: React.FC = () => {
       </div>
       <button onClick={openCreateModal}>Добавить рецепт</button>
       <div className="recipes-list">
-        {recipes.map((recipe: Recipe) => (
+        {[...recipes].sort((a: Recipe, b: Recipe) => a.recipe_id - b.recipe_id).map((recipe: Recipe) => (
           <div key={recipe.recipe_id} className="recipe-card">
             <div className="recipe-header">
               <h3>{recipe.name}</h3>
@@ -227,7 +227,7 @@ const RecipesPage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {getOperationsForRecipe(recipe.recipe_id).map((op: RecipeOperation) => (
+                      {getOperationsForRecipe(recipe.recipe_id).sort((a: RecipeOperation, b: RecipeOperation) => a.sequence_number - b.sequence_number).map((op: RecipeOperation) => (
                         <tr key={op.recipe_operation_id}>
                           <td>{op.sequence_number}</td>
                           <td>{op.operation_name}</td>
