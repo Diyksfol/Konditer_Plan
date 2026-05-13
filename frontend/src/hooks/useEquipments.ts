@@ -10,7 +10,12 @@ export const useEquipments = () => {
   const fetchEquipments = async () => {
     try {
       const data = await api.getEquipment();
-      setEquipments(data.sort((a: Equipment, b: Equipment) => a.equipment_id - b.equipment_id));
+      setEquipments(data.sort((a: Equipment, b: Equipment) => {
+        if (a.equipment_type_id !== b.equipment_type_id) {
+          return a.equipment_type_id - b.equipment_type_id;
+        }
+        return a.equipment_id - b.equipment_id;
+      }));
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {

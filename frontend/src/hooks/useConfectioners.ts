@@ -10,7 +10,12 @@ export const useConfectioners = () => {
   const fetchConfectioners = async () => {
     try {
       const data = await api.getConfectioners();
-      setConfectioners(data.sort((a: Confectioner, b: Confectioner) => a.confectioner_id - b.confectioner_id));
+      setConfectioners(data.sort((a: Confectioner, b: Confectioner) => {
+        if (a.qualification_id !== b.qualification_id) {
+          return a.qualification_id - b.qualification_id;
+        }
+        return a.confectioner_id - b.confectioner_id;
+      }));
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {

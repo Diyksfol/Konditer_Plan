@@ -67,11 +67,8 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, onClose, onSubm
           >
             <option value="">Выберите единицу</option>
             <option value="кг">кг (килограммы)</option>
-            <option value="г">г (граммы)</option>
             <option value="л">л (литры)</option>
-            <option value="мл">мл (миллилитры)</option>
             <option value="шт">шт (штуки)</option>
-            <option value="дозы">дозы</option>
           </select>
         </div>
         <div className="form-group">

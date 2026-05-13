@@ -10,5 +10,8 @@
             "approve": true,
             "matchCommandLine": true
         }
+    },
+    "python.analysis.diagnosticSeverityOverrides": {
+        
     }
 }

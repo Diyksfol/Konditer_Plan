@@ -43,7 +43,12 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, onClose, onSubmit, initia
     if (formData.recipe_id) dataToSubmit.recipe_id = parseInt(formData.recipe_id);
     if (formData.quantity) dataToSubmit.quantity = parseInt(formData.quantity);
     if (formData.delivery_date) dataToSubmit.delivery_date = formData.delivery_date;
-    if (formData.status) dataToSubmit.status = formData.status;
+    // Для новых заказов всегда устанавливаем статус 'planned'
+    if (!initialData) {
+      dataToSubmit.status = 'planned';
+    } else if (formData.status) {
+      dataToSubmit.status = formData.status;
+    }
 
     onSubmit(dataToSubmit);
     onClose();
@@ -84,18 +89,20 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, onClose, onSubmit, initia
             placeholder="Оставьте пустым, чтобы не менять"
           />
         </div>
-        <div className="form-group">
-          <label>Статус:</label>
-          <select
-            value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-          >
-            <option value="">Оставьте пустым, чтобы не менять</option>
-            <option value="planned">Запланирован</option>
-            <option value="in_progress">В работе</option>
-            <option value="completed">Завершен</option>
-          </select>
-        </div>
+        {initialData && (
+          <div className="form-group">
+            <label>Статус:</label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+            >
+              <option value="">Оставьте пустым, чтобы не менять</option>
+              <option value="planned">Запланирован</option>
+              <option value="in_progress">В работе</option>
+              <option value="completed">Завершен</option>
+            </select>
+          </div>
+        )}
         <div className="form-actions">
           <button type="submit">{initialData ? 'Обновить' : 'Создать'}</button>
           <button type="button" onClick={onClose}>Отмена</button>

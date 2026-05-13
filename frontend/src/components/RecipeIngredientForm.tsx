@@ -13,19 +13,19 @@ const RecipeIngredientForm: React.FC<RecipeIngredientFormProps> = ({ isOpen, onC
   const { ingredients } = useIngredients();
   const [formData, setFormData] = useState({
     ingredient_id: initialData?.ingredient_id || '',
-    quantity: initialData?.quantity || '',
+    quantity_per_unit: initialData?.quantity_per_unit || '',
   });
 
   useEffect(() => {
     if (initialData) {
       setFormData({
         ingredient_id: initialData.ingredient_id || '',
-        quantity: initialData.quantity || '',
+        quantity_per_unit: initialData.quantity_per_unit || '',
       });
     } else {
       setFormData({
         ingredient_id: '',
-        quantity: '',
+        quantity_per_unit: '',
       });
     }
   }, [initialData, isOpen]);
@@ -35,7 +35,7 @@ const RecipeIngredientForm: React.FC<RecipeIngredientFormProps> = ({ isOpen, onC
     // Отправляем только заполненные поля
     const dataToSubmit: any = {};
     if (formData.ingredient_id) dataToSubmit.ingredient_id = parseInt(formData.ingredient_id);
-    if (formData.quantity !== '') dataToSubmit.quantity = parseFloat(formData.quantity);
+    if (formData.quantity_per_unit !== '') dataToSubmit.quantity_per_unit = parseFloat(formData.quantity_per_unit);
 
     onSubmit(dataToSubmit);
     onClose();
@@ -63,8 +63,8 @@ const RecipeIngredientForm: React.FC<RecipeIngredientFormProps> = ({ isOpen, onC
           <input
             type="number"
             step="0.01"
-            value={formData.quantity}
-            onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+            value={formData.quantity_per_unit}
+            onChange={(e) => setFormData({ ...formData, quantity_per_unit: e.target.value })}
             placeholder="Оставьте пустым, чтобы не менять"
           />
         </div>

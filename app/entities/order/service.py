@@ -108,8 +108,19 @@ class OrderService(BaseService):
         # Валидация
         self.validate(data_dict, is_update=True)
 
-        # Обновление
-        return self.repo.update(db, order_id, data_dict)
+        # Удаляем все предыдущие записи в расписании для этого заказа
+        from app.entities.schedule.repository import ScheduleEntryRepository
+        schedule_repo = ScheduleEntryRepository()
+        schedule_repo.delete_by_order_id(db, order_id)
+
+        # Обновление заказа
+        updated_order = self.repo.update(db, order_id, data_dict)
+
+        # Перепланируем заказ
+        planning_service = PlanningService()
+        planning_service.plan_order(db, order_id)
+
+        return updated_order
 
     def get_by_status(self, db, status: str):
         return self.repo.get_by_status(db, status)

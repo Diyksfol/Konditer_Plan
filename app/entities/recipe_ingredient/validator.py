@@ -11,17 +11,17 @@ class RecipeIngredientValidator:
                 raise HTTPException(400, "ID рецепта должен быть больше 0")
 
         if not is_update or 'quantity_per_unit' in data:
-            quantity_per_unit = data.get('quantity_per_unit', 0)
+            if 'quantity_per_unit' not in data:
+                raise HTTPException(400, "Количество на единицу обязательно")
+            
+            quantity_per_unit = data.get('quantity_per_unit')
             if isinstance(quantity_per_unit, str):
                 try:
                     quantity_per_unit = float(quantity_per_unit)
+                    data['quantity_per_unit'] = quantity_per_unit
                 except ValueError:
                     raise HTTPException(400, "Количество на единицу должно быть числом")
-            if quantity_per_unit <= 0:
-                raise HTTPException(400, "Количество на единицу должно быть больше 0")
-
-        if not is_update or 'quantity_per_unit' in data:
-            quantity_per_unit = data.get('quantity_per_unit', 0)
+            
             if quantity_per_unit <= 0:
                 raise HTTPException(400, "Количество на единицу должно быть больше 0")
 

@@ -6,7 +6,7 @@ class Inventory(Base):
     __tablename__ = "inventories"
 
     inventory_id = Column(Integer, primary_key=True, index=True)
-    ingredient_id = Column(Integer, ForeignKey("ingredients.ingredient_id", ondelete="RESTRICT", onupdate="CASCADE"))
+    ingredient_id = Column(Integer, ForeignKey("ingredients.ingredient_id", ondelete="CASCADE", onupdate="CASCADE"))
     current_quantity = Column(Numeric(10, 3), default=0.000)
     min_stock = Column(Numeric(10, 3), default=0.000)
     last_check = Column(TIMESTAMP, default="CURRENT_TIMESTAMP")

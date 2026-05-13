@@ -27,3 +27,8 @@ class InventoryRepository(BaseRepository):
         db.commit()
         db.refresh(inventory)
         return inventory
+
+    # удаление по ингредиенту
+    def delete_by_ingredient_id(self, db: Session, ingredient_id: int):
+        db.query(Inventory).filter(Inventory.ingredient_id == ingredient_id).delete()
+        db.commit()

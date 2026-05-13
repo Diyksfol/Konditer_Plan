@@ -69,5 +69,11 @@ class IngredientService(BaseService):
 
         return ingredient
 
-    def get_low_stock(self, db):
-        return self.repo.get_low_stock(db)
+    def delete(self, db, entity_id: int):
+        """Delete ingredient and all associated inventory entries"""
+        # Delete all inventory records for this ingredient
+        inventory_repo = InventoryRepository()
+        inventory_repo.delete_by_ingredient_id(db, entity_id)
+        
+        # Delete the ingredient
+        return super().delete(db, entity_id)

@@ -24,7 +24,7 @@ const SchedulePage: React.FC = () => {
   const [editingConfectioner, setEditingConfectioner] = useState<Confectioner | null>(null);
   const [editingEquipment, setEditingEquipment] = useState<Equipment | null>(null);
   const [viewMode, setViewMode] = useState<'equipment' | 'confectioner'>('equipment');
-  const [zoomLevel, setZoomLevel] = useState(1);
+  const [zoomLevel, setZoomLevel] = useState(2);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const DAY_START_HOUR = 9;
@@ -263,8 +263,8 @@ const SchedulePage: React.FC = () => {
             <label>Масштаб: </label>
             <input
               type="range"
-              min="1"
-              max="5"
+              min="2"
+              max="6"
               step="0.1"
               value={zoomLevel}
               onChange={(e) => setZoomLevel(parseFloat(e.target.value))}
@@ -275,11 +275,11 @@ const SchedulePage: React.FC = () => {
         </div>
       </div>
 
-      <div className="schedule-timeline" ref={containerRef}>
+      <div className="schedule-timeline" ref={containerRef} style={{ '--cell-width': `${baseCellWidth * zoomLevel}px` } as any}>
         <div className="timeline-container" style={{ minWidth: `${timelineContainerMinWidth}px` }}>
           <div className="timeline-header">
             <div className="timeline-row-label">{viewMode === 'equipment' ? 'Оборудование' : 'Кондитер'}</div>
-            <div className="timeline-header-track" style={{ gridTemplateColumns: `repeat(${totalColumns}, ${baseCellWidth * zoomLevel}px)`, background: `repeating-linear-gradient(to right, transparent 0, transparent ${baseCellWidth * zoomLevel * 3 - 1}px, rgba(0, 0, 0, 0.1) ${baseCellWidth * zoomLevel * 3 - 1}px, rgba(0, 0, 0, 0.1) ${baseCellWidth * zoomLevel * 3}px)` }}>
+            <div className="timeline-header-track" style={{ gridTemplateColumns: `repeat(${totalColumns}, ${baseCellWidth * zoomLevel}px)` }}>
               {Array.from({ length: totalColumns }, (_, i) => {
                 const minutes = i * intervalMinutes;
                 const hour = DAY_START_HOUR + Math.floor(minutes / 60);
@@ -307,10 +307,7 @@ const SchedulePage: React.FC = () => {
               return (
                 <div key={rowId} className="timeline-row">
                   <div className="timeline-row-label">{rowLabel}</div>
-                  <div className="timeline-row-track" style={{ 
-                    gridTemplateColumns: `repeat(${totalColumns}, ${baseCellWidth * zoomLevel}px)`,
-                    background: `repeating-linear-gradient(to right, transparent 0, transparent ${baseCellWidth * zoomLevel * 3 - 1}px, rgba(0, 0, 0, 0.1) ${baseCellWidth * zoomLevel * 3 - 1}px, rgba(0, 0, 0, 0.1) ${baseCellWidth * zoomLevel * 3}px)`
-                  }}>
+                  <div className="timeline-row-track" style={{ gridTemplateColumns: `repeat(${totalColumns}, ${baseCellWidth * zoomLevel}px)` }}>
                     {rowEntries.map((entry: ScheduleEntry) => {
                       const blockInfo = getBlockInfo(entry);
                       return (

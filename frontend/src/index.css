@@ -133,7 +133,8 @@ button:nth-child(3):hover {
   max-width: 500px;
   width: 90%;
   max-height: 90vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header {
@@ -167,6 +168,9 @@ button:nth-child(3):hover {
 
 .modal-body {
   padding: 1rem;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Forms */
@@ -241,11 +245,12 @@ button:nth-child(3):hover {
   padding: 0.25rem 0.25rem;
   text-align: center;
   font-weight: 600;
-  border-right: 1px solid #dee2e6;
   font-size: 0.8rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  white-space: nowrap;
+  min-height: 2.5rem;
 }
 
 .timeline-time-label.rotated {
@@ -264,6 +269,9 @@ button:nth-child(3):hover {
   font-weight: 600;
   border-right: 1px solid #dee2e6;
   font-size: 0.8rem;
+  position: sticky;
+  left: 0;
+  z-index: 1;
 }
 
 .timeline-time-label:last-child,
@@ -286,7 +294,7 @@ button:nth-child(3):hover {
 .timeline-row-track,
 .timeline-header-track {
   display: grid;
-  align-items: center;
+  align-items: stretch;
   width: 100%;
 }
 
@@ -296,9 +304,20 @@ button:nth-child(3):hover {
     repeating-linear-gradient(
       to right,
       transparent 0,
-      transparent calc(20px * var(--zoom) * 6 - 1px),
-      rgba(0, 0, 0, 0.1) calc(20px * var(--zoom) * 6 - 1px),
-      rgba(0, 0, 0, 0.1) calc(20px * var(--zoom) * 6)
+      transparent calc(var(--cell-width, 18px) * 3 - 1px),
+      rgba(0, 0, 0, 0.1) calc(var(--cell-width, 18px) * 3 - 1px),
+      rgba(0, 0, 0, 0.1) calc(var(--cell-width, 18px) * 3)
+    );
+}
+
+.timeline-header-track {
+  background: 
+    repeating-linear-gradient(
+      to right,
+      transparent 0,
+      transparent calc(var(--cell-width, 18px) * 3 - 1px),
+      rgba(0, 0, 0, 0.1) calc(var(--cell-width, 18px) * 3 - 1px),
+      rgba(0, 0, 0, 0.1) calc(var(--cell-width, 18px) * 3)
     );
 }
 
